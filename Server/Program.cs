@@ -1,11 +1,23 @@
 ﻿using Microsoft.AspNetCore.ResponseCompression;
-
+using WheelOfFortune.Server;
+using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
+
+// Add configuration
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json")
+    .Build();
 
 // Add services to the container.
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+
+builder.Services.AddDbContext<DatabaseContext>(options =>
+{
+    var connectionString = configuration.GetConnectionString("MSSQL");
+    options.UseSqlServer(connectionString);
+});
 
 var app = builder.Build();
 
