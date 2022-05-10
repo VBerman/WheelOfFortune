@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 using WheelOfFortune.Shared.Model.RealEstate;
 using WheelOfFortune.Shared.Model.User;
-namespace WheelOfFortune.Server
+namespace WheelOfFortune.Shared.Model
 {
     public class DatabaseContext : DbContext
     {
@@ -10,5 +11,7 @@ namespace WheelOfFortune.Server
         public DatabaseContext(DbContextOptions<DatabaseContext> options)
             : base(options) { }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
     }
 }
