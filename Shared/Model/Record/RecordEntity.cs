@@ -12,11 +12,11 @@ namespace WheelOfFortune.Shared.Model.Record
     {
         public int Id { get; set; }
         public int ClientId { get; set; }
-        public UserEntity Client { get; set; }
+        public virtual UserEntity Client { get; set; }
         
         public int RealStateId { get; set; }
 
-        public RealEstateEntity RealEstate { get; set; }
+        public virtual RealEstateEntity RealEstate { get; set; }
 
         public DateTime DateTime { get; set; }
 
