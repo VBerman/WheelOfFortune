@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -20,9 +21,9 @@ namespace WheelOfFortune.Server.Controllers
         private readonly DatabaseContext _context;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
-        private readonly JwtTokenService _jwtTokenService;
+        private readonly IJwtTokenService _jwtTokenService;
 
-        public UserController(DatabaseContext context, IMapper mapper, IConfiguration configuration, JwtTokenService jwtTokenService)
+        public UserController(DatabaseContext context, IMapper mapper, IConfiguration configuration, IJwtTokenService jwtTokenService)
         {
             _context = context;
             _mapper = mapper;
@@ -126,6 +127,13 @@ namespace WheelOfFortune.Server.Controllers
             var tokenPair = _jwtTokenService.IssueTokenPair(user, refreshTokenEntity.Id);
             
             return Ok(tokenPair);
+        }
+
+        [Authorize(Roles ="Landlord")]
+        [HttpGet]
+        public async Task<IActionResult> Check()
+        {
+            return Ok();
         }
 
     }

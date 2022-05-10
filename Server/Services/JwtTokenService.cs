@@ -7,7 +7,7 @@ using WheelOfFortune.Shared.Model.User;
 
 namespace WheelOfFortune.Server.Services
 {
-    public class JwtTokenService
+    public class JwtTokenService : IJwtTokenService
     {
         private readonly JwtSecurityTokenHandler _tokenHandler;
         private readonly SymmetricSecurityKey _securityKey;
@@ -60,8 +60,8 @@ namespace WheelOfFortune.Server.Services
         {
             var dictionaryClaims = new Dictionary<string, object>()
             {
-                {"Role", user.Role.ToString() },
-                {"Name", user.FullName },
+                {"http://schemas.microsoft.com/ws/2008/06/identity/claims/role", user.Role.ToString() },
+                {"http://schemas.microsoft.com/ws/2008/06/identity/claims/name", user.FullName },
                 {"Email", user.Email },
                 {"Sub", user.Id.ToString()}
             };
@@ -69,7 +69,7 @@ namespace WheelOfFortune.Server.Services
             var accessToken = IssueToken(dictionaryClaims, _accessTokenLifetime);
 
             dictionaryClaims.Add("Jti", refreshTokenId.ToString());
-            
+
             var refreshToken = IssueToken(dictionaryClaims, _refreshTokenLifetime);
 
             return new TokenPairDto(accessToken, refreshToken);

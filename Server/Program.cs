@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using WheelOfFortune.Server.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +16,7 @@ var configuration = new ConfigurationBuilder()
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json")
     .Build();
 
+builder.Services.AddSingleton(configuration);
 // Add services to the container.
 
 builder.Services.AddControllersWithViews().AddJsonOptions(opt =>
@@ -26,7 +31,32 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseSqlServer(connectionString, b => b.MigrationsAssembly("WheelOfFortune.Server"));
 });
 
-builder.Services.AddScoped<JwtTokenService>();
+// Add auth services
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var jwtSecret = Encoding.ASCII.GetBytes(configuration["JwtAuth:Secret"]);
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            RequireSignedTokens = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(jwtSecret),
+
+            ValidateAudience = false,
+            ValidateIssuer = false,
+
+            RequireExpirationTime = true,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+        options.RequireHttpsMetadata = false;
+
+        var tokenHandler = options.SecurityTokenValidators.OfType<JwtSecurityTokenHandler>().Single();
+        tokenHandler.InboundClaimTypeMap.Clear();
+        tokenHandler.OutboundClaimTypeMap.Clear();
+    });
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
 var app = builder.Build();
 
@@ -52,6 +82,8 @@ app.UseRouting();
 
 app.MapRazorPages();
 app.MapControllers();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapFallbackToFile("index.html");
 
 app.Run();
