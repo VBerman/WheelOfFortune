@@ -1,7 +1,22 @@
 ﻿@page "/"
-
+@using Services
+@using WheelOfFortune.Shared.Model.User
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Components.Authorization
 <PageTitle>Index</PageTitle>
 
 <MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
 <MudText Class="mb-8">Welcome to your new app, powered by MudBlazor!</MudText>
 <MudAlert Severity="Severity.Normal">You can find documentation and examples on our website here: <MudLink Href="https://mudblazor.com" Typo="Typo.body2" Color="Color.Inherit"><b>www.mudblazor.com</b></MudLink></MudAlert>
+<MudButton OnClick=@Test>Hello bro</MudButton>
+<AuthorizeView Roles="Client">
+    <MudText Typo="Typo.h3">check</MudText>
+</AuthorizeView>
+@code {
+    public async Task Test()
+    {
+        var result = await AuthService.Login(new AuthenticateUserDto() { Email = "Client@gmail.com", Password = "Client" });
+        NavigationManager.NavigateTo("/", true);
+    }
+}

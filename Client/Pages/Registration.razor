@@ -1,0 +1,32 @@
+﻿@page "/login"
+@using WheelOfFortune.Shared.Model.User
+
+<PageTitle>Login</PageTitle>
+<MudText Typo="Typo.h2" Style="padding-bottom:10px">Login</MudText>
+<EditForm Model=@_authenticateUserDto OnValidSubmit=@HandleLogin>
+    <DataAnnotationsValidator />
+    <MudCard>
+        <MudCardContent>
+            <MudTextField Variant="Variant.Outlined" Label="Email" InputType="InputType.Email" @bind-Value="_authenticateUserDto.Email" For=@(() => _authenticateUserDto.Email)></MudTextField>
+            <MudTextField Variant="Variant.Outlined" Label="Password" InputType="InputType.Password" @bind-Value="_authenticateUserDto.Password" For=@(() => _authenticateUserDto.Password)></MudTextField>
+
+        </MudCardContent>
+        <MudCardActions Class="d-flex justify-end">
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" >Register</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Style="margin-left:10px">Log in</MudButton>
+        </MudCardActions>
+    </MudCard>
+</EditForm>
+@code {
+    private AuthenticateUserDto _authenticateUserDto { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _authenticateUserDto = new AuthenticateUserDto();
+    }
+
+    private async Task HandleLogin()
+    {
+
+    }
+}

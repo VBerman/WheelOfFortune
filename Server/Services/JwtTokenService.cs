@@ -28,7 +28,7 @@ namespace WheelOfFortune.Server.Services
             _accessTokenLifetime = TimeSpan.FromMinutes(accessTokenLifetimeInMinutes);
 
             var refreshTokenLifetimeInDays = int.Parse(configuration["JwtAuth:RefreshTokenLifetime"]);
-            _refreshTokenLifetime = TimeSpan.FromMinutes(refreshTokenLifetimeInDays);
+            _refreshTokenLifetime = TimeSpan.FromDays(refreshTokenLifetimeInDays);
         }
 
         public IDictionary<string, string>? ParseToken(string token)

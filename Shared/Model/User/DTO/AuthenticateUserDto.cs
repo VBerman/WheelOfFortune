@@ -10,8 +10,11 @@ namespace WheelOfFortune.Shared.Model.User
     public class AuthenticateUserDto
     {
         [DataType(DataType.EmailAddress)]
+        [Required]
         public string Email { get; set; }
         [DataType(DataType.Password)]
+        [Required]
+        [MinLength(3)]
         public string Password { get; set; }    
     }
 }
