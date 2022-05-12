@@ -68,6 +68,8 @@ namespace WheelOfFortune.Client.Providers
         {
             var anonymousUser = new ClaimsPrincipal(new ClaimsIdentity());
             var authState = Task.FromResult(new AuthenticationState(anonymousUser));
+            _localStorage.RemoveItemAsync("accessToken");
+            _localStorage.RemoveItemAsync("refreshToken");
             NotifyAuthenticationStateChanged(authState);
         }
     }

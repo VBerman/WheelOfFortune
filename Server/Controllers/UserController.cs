@@ -15,7 +15,7 @@ using Crypt = BCrypt.Net.BCrypt;
 namespace WheelOfFortune.Server.Controllers
 {
     [ApiController]
-    [Route("[controller]/[action]")]
+    [Route("api/[controller]/[action]")]
     public class UserController : ControllerBase
     {
         private readonly DatabaseContext _context;
@@ -129,12 +129,7 @@ namespace WheelOfFortune.Server.Controllers
             return Ok(tokenPair);
         }
 
-        [Authorize(Roles ="Landlord")]
-        [HttpGet]
-        public async Task<IActionResult> Check()
-        {
-            return Ok();
-        }
+        
 
     }
 }

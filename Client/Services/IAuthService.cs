@@ -5,6 +5,7 @@ namespace WheelOfFortune.Client.Services
 {
     public interface IAuthService
     {
-        Task<TokenPairDto> Login(AuthenticateUserDto loginModel);
+        Task<bool> Login(AuthenticateUserDto loginModel);
+        Task<bool> Register(RegisterUserDto registerModel);
     }
 }

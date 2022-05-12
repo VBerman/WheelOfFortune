@@ -1,6 +1,7 @@
 ﻿using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using WheelOfFortune.Client.Providers;
@@ -27,23 +28,27 @@ namespace WheelOfFortune.Client.Services
 
 
         //}
-        public async Task<TokenPairDto> Login(AuthenticateUserDto loginModel)
+        public async Task<bool> Login(AuthenticateUserDto loginModel)
         {
-            var loginAsJson = JsonSerializer.Serialize(loginModel);
-            var response = await _httpClient.PostAsync("User/Authenticate", new StringContent(loginAsJson, Encoding.UTF8, "application/json"));
-            var loginResult = JsonSerializer.Deserialize<TokenPairDto>(await response.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
+            var response = await _httpClient.PostAsJsonAsync("api/User/Authenticate", loginModel);
             if (!response.IsSuccessStatusCode)
             {
-                return loginResult;
+                return false;
             }
-
+            var loginResult = JsonSerializer.Deserialize<TokenPairDto>(await response.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             await _localStorage.SetItemAsync("accessToken", loginResult.AccessToken);
             await _localStorage.SetItemAsync("refreshToken", loginResult.RefreshToken);
             ((ApiAuthenticationStateProvider)_authenticationStateProvider).MarkUserAsAuthenticated(loginResult.AccessToken);
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", loginResult.AccessToken);
 
-            return loginResult;
+            return true;
+        }
+
+        public async Task<bool> Register(RegisterUserDto registerModel)
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/User/Register", registerModel);
+            return response.IsSuccessStatusCode;
+
         }
     }
 }
