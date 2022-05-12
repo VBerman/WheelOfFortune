@@ -41,6 +41,8 @@ namespace WheelOfFortune.Shared.Model.RealEstate
 
         public int? AdminConfirmedId { get; set; }
 
+        public string? RejectionReason { get; set; }
+
         public virtual UserEntity? AdminConfirmed { get; set; }
 
         public virtual ICollection<RecordEntity> Records { get; set; }

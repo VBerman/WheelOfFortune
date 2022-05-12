@@ -38,7 +38,8 @@ namespace WheelOfFortune.Server.Controllers
         {
 
             var newUser = _mapper.Map<UserEntity>(registerDto);
-            if (newUser.Role == Shared.Enums.Role.Admin)
+
+            if (!User.IsInRole("Admin") & newUser.Role == Shared.Enums.Role.Admin)
             {
                 return Conflict("Cannot register admin");
             }
