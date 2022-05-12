@@ -1,5 +1,9 @@
-﻿@inherits LayoutComponentBase
-
+﻿@using Blazored.LocalStorage
+@using Microsoft.AspNetCore.Components.Authorization
+@using WheelOfFortune.Client.Providers
+@inherits LayoutComponentBase
+@inject ILocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
 <MudThemeProvider IsDarkMode="@_darkMode" />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -7,8 +11,19 @@
 <MudLayout>
     <MudAppBar Elevation="0">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudIconButton Icon="@Icons.Filled.DarkMode" Color="Color.Inherit" OnClick="ChangeDarkMode" />
         <MudSpacer />
-        <MudIconButton Icon="@Icons.Filled.DarkMode" Color="Color.Inherit" OnClick="((e) => {_darkMode = !_darkMode;})" />
+        <AuthorizeView>
+            <Authorized>
+                <MudIconButton Icon="@Icons.Filled.VerifiedUser"/>
+                <MudLink Color=Color.Secondary Style="margin-left:5px" onclick="@(() => ((ApiAuthenticationStateProvider) AuthStateProvider).MarkUserAsLoggedOut())">Выйти</MudLink>
+            </Authorized>
+            <NotAuthorized>
+                <MudLink Color=Color.Secondary Href="/login">Войти</MudLink>
+                <MudLink Color=Color.Secondary Style="margin-left:5px" Href="/registration">Зарегистрироваться</MudLink>
+            </NotAuthorized>
+        </AuthorizeView>
+        
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" Elevation="1">
         <MudDrawerHeader>
@@ -25,10 +40,21 @@
 
 @code {
     bool _drawerOpen = true;
-    bool _darkMode = true;
+    bool _darkMode;
     void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _darkMode = await LocalStorage.GetItemAsync<bool>("DarkMode");
+    }
+
+    void ChangeDarkMode()
+    {
+        _darkMode = !_darkMode;
+        LocalStorage.SetItemAsync<bool>("DarkMode", _darkMode);
     }
 
 

@@ -11,7 +11,7 @@ namespace WheelOfFortune.Shared.Model.User
         public UserMappingProfile()
         {
             CreateMap<UserEntity, ReadUserDto>();
-            CreateMap<RegisterUserDto, UserEntity>();
+            CreateMap<RegisterUserDto, UserEntity>().ReverseMap();
         }
     }
 }

@@ -35,13 +35,13 @@ namespace WheelOfFortune.Shared.Model.RealEstate
         public string? AdditionalInfo { get; set; }
 
         public int LandlordId { get; set; }
-        public UserEntity Landlord { get; set; }
+        public virtual UserEntity Landlord { get; set; }
 
         public bool IsConfirmed { get; set; }
 
         public int? AdminConfirmedId { get; set; }
 
-        public UserEntity? AdminConfirmed { get; set; }
+        public virtual UserEntity? AdminConfirmed { get; set; }
 
         public virtual ICollection<RecordEntity> Records { get; set; }
     }
