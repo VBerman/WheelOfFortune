@@ -14,7 +14,9 @@ namespace WheelOfFortune.Shared.Model.RealEstate
             CreateMap<UpdateRealEstateDto, RealEstateEntity>().ReverseMap();
             CreateMap<UpdateConfirmedRealEstateDto, RealEstateEntity>().ReverseMap();
             CreateMap<RealEstateEntity, ReadRealEstateDto>();
-
+            CreateMap<ReadRealEstateDto, UpdateRealEstateDto>();
+            CreateMap<ReadRealEstateDto, UpdateConfirmedRealEstateDto>();
+            CreateMap<ReadRealEstateDto, CreateRealEstateDto>();
         }
     }
 }

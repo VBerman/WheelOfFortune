@@ -1,0 +1,132 @@
+﻿@page "/RealEstate/{Id:int}"
+@page "/RealEstate/create"
+@using AutoMapper
+@using Microsoft.AspNetCore.Components.Authorization
+@using WheelOfFortune.Client.Services
+@using WheelOfFortune.Shared.Model.RealEstate
+@using Extensions
+@inject AuthenticationStateProvider AuthState
+@inject RealEstateService RealEstateService
+@inject IMapper Mapper
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+@if (_realEstate is null)
+{
+    <MudText Typo=Typo.h3>Искомая недвижимость не найдена или не подтверждена администратором</MudText>
+}
+else
+{
+    <EditForm Model="@_realEstate" OnValidSubmit=@(_isCreate ? Create : Update)>
+        <DataAnnotationsValidator />
+        <MudText Typo=Typo.h3>Недвижимость @_realEstate.Name</MudText>
+        <MudTextField @bind-Value=_realEstate.Name Label="Наименование" ReadOnly="@_isReadOnly" For=@(() => _realEstate.Name) />
+        <MudTextField @bind-Value=_realEstate.Address Label="Адрес" ReadOnly="@_isReadOnly" For=@(() => _realEstate.Address) />
+        <MudTextField @bind-Value=_realEstate.Security Label="Безопасность" ReadOnly="@_isReadOnly" For=@(() => _realEstate.Security) />
+        <MudCheckBox @bind-Checked=_realEstate.HasParking Label="Имеется парковка" ReadOnly="@_isReadOnly" For=@(() => _realEstate.HasParking) />
+        <MudTextField @bind-Value=_realEstate.Area Label="Площадь" ReadOnly="@_isReadOnly" For=@(() => _realEstate.Area) />
+        <MudTextField @bind-Value=_realEstate.Price Label="Цена" ReadOnly="@_isReadOnly" For=@(() => _realEstate.Price) />
+        <MudTextField @bind-Value=_realEstate.AdditionalInfo Label="Дополнительная информация" ReadOnly="@_isReadOnly" For=@(() => _realEstate.AdditionalInfo) />
+        @if (!_isCreate)
+        {
+            <MudField Label="Владелец">
+                <MudLink Href="#">@_realEstate.LandLordFullName</MudLink>
+            </MudField>
+        }
+        @if (!_isReadOnly)
+        {
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Style="float:right; margin-top:15px">@(_isCreate ? "Создать" : "Обновить")</MudButton>
+        }
+    </EditForm>
+    @if (!_isCreate)
+    {
+        <AuthorizeView Roles="Admin,Landlord" Context="AV">
+            <EditForm Model=@_realEstate OnValidSubmit=UpdateConfirmed Context="EF">
+                <DataAnnotationsValidator />
+
+                <MudCheckBox Label="Подверждено" @bind-Checked=_realEstate.IsConfirmed ReadOnly="@(!_isAdmin)" For=@(() => _realEstate.IsConfirmed) />
+                @if (!_realEstate.IsConfirmed)
+                {
+                    <MudTextField Lines="4" @bind-Value=_realEstate.RejectionReason Label="Причина отказа" For=@(() => _realEstate.RejectionReason) />
+                }
+                @if (_isAdmin)
+                {
+                    <MudButton ButtonType="ButtonType.Submit" Style="float:right; margin-top:15px">Обновить</MudButton>
+                }
+            </EditForm>
+        </AuthorizeView>
+
+    }
+
+
+}
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    ReadRealEstateDto _realEstate;
+    bool _isReadOnly = true;
+    bool _isAdmin = false;
+    bool _isCreate = false;
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthState.GetAuthenticationStateAsync()).User;
+        _isCreate = NavigationManager.Uri.Split('/').Last().ToLower() == "create" & user.IsInRole("Landlord");
+        if (_isCreate)
+        {
+            _realEstate = new();
+            _isReadOnly = false;
+        }
+        else
+        {
+            _realEstate = await RealEstateService.Get(Id);
+            if (_realEstate is not null)
+            {
+                var claimId = user.Claims.FirstOrDefault(c => c.Type == "Sub");
+                if (claimId is not null)
+                {
+                    var userId = int.Parse(claimId.Value);
+                    if (userId == _realEstate.LandlordId)
+                    {
+                        _isReadOnly = false;
+                    }
+                }
+                _isAdmin = user.IsInRole("Admin");
+                if (_isAdmin | !_isReadOnly)
+                {
+
+                }
+                else if (!_realEstate.IsConfirmed)
+                {
+                    _realEstate = null;
+                }
+
+            }
+        }
+
+    }
+
+    private async Task Update()
+    {
+        var result = await RealEstateService.Update(Mapper.Map<UpdateRealEstateDto>(_realEstate));
+        Snackbar.Report(result, "обновлено");
+        _realEstate.IsConfirmed = false;
+        _realEstate.RejectionReason = "Ещё не проверена";
+
+
+
+    }
+    private async Task UpdateConfirmed()
+    {
+        var result = await RealEstateService.UpdateConfirmed(Mapper.Map<UpdateConfirmedRealEstateDto>(_realEstate));
+        Snackbar.Report(result, "обновлено");
+    }
+    private async Task Create()
+    {
+        var result = await RealEstateService.Create(Mapper.Map<CreateRealEstateDto>(_realEstate));
+        Snackbar.Report(result != "Error", "создано");
+        if (result != "Error") { NavigationManager.NavigateTo($"/RealEstate/{result}", true); }
+    }
+
+}

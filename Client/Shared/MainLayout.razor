@@ -15,12 +15,11 @@
         <MudSpacer />
         <AuthorizeView>
             <Authorized>
-                <MudIconButton Icon="@Icons.Filled.VerifiedUser"/>
-                <MudLink Color=Color.Secondary Style="margin-left:5px" onclick="@(() => ((ApiAuthenticationStateProvider) AuthStateProvider).MarkUserAsLoggedOut())">Выйти</MudLink>
+                <MudLink Color=Color.Secondary onclick="@(() => ((ApiAuthenticationStateProvider) AuthStateProvider).MarkUserAsLoggedOut())">Выйти</MudLink>
             </Authorized>
             <NotAuthorized>
                 <MudLink Color=Color.Secondary Href="/login">Войти</MudLink>
-                <MudLink Color=Color.Secondary Style="margin-left:5px" Href="/registration">Зарегистрироваться</MudLink>
+                <MudLink Color=Color.Secondary Style="margin-left:10px" Href="/registration">Зарегистрироваться</MudLink>
             </NotAuthorized>
         </AuthorizeView>
         
@@ -49,6 +48,7 @@
     protected override async Task OnInitializedAsync()
     {
         _darkMode = await LocalStorage.GetItemAsync<bool>("DarkMode");
+
     }
 
     void ChangeDarkMode()

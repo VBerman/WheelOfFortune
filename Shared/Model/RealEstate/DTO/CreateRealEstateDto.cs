@@ -19,6 +19,7 @@ namespace WheelOfFortune.Shared.Model.RealEstate
         [Range(0, 10000.00)]
         public decimal Area { get; set; }
         [DataType(DataType.Currency)]
+        [Range(0, 100000000)]
         public decimal Price { get; set; }
         public string? AdditionalInfo { get; set; }
 

@@ -1,18 +1,68 @@
 ﻿@page "/"
 @using Services
+@using WheelOfFortune.Client.Providers
+@using WheelOfFortune.Shared.Model.RealEstate
 @using WheelOfFortune.Shared.Model.User
-@inject IAuthService AuthService
-@inject NavigationManager NavigationManager
 @using Microsoft.AspNetCore.Components.Authorization
+@using Extensions
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager NavigationManager
+@inject RealEstateService RealEstateService
 <PageTitle>Index</PageTitle>
 
-<MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
-<MudText Class="mb-8">Welcome to your new app, powered by MudBlazor!</MudText>
-<MudAlert Severity="Severity.Normal">You can find documentation and examples on our website here: <MudLink Href="https://mudblazor.com" Typo="Typo.body2" Color="Color.Inherit"><b>www.mudblazor.com</b></MudLink></MudAlert>
+<MudText Typo="Typo.h3" GutterBottom="true">Недвижимость, доступная для аренды</MudText>
+<MudTextField Style="margin-bottom:15px" @bind-Value=@_findString DebounceInterval="500" Clearable="true" OnDebounceIntervalElapsed="HandleIntervalElapsed" Label="Поиск" Adornment="Adornment.End" AdornmentIcon="@Icons.Filled.Search"></MudTextField>
+<MudGrid>
+    @foreach (var realEstate in _realEstatesFinded)
+    {
+        <MudItem xs="4">
+            <MudCard>
+                <MudCardMedia Height="200" Image="https://sun9-32.userapi.com/s/v1/if2/cVDWDAESjHS2Z44iRgxU9igWB21yzV9LOjLuBHFE2VQq852PQStD5eo8KaDLLCqra8ORWXfbYaR96X19SrOe-OWE.jpg?size=800x450&quality=95&type=album" />
+                <MudCardContent>
+                    <MudText Typo="Typo.h5">@realEstate.Name</MudText>
+                    <MudText Typo="Typo.body2">Адрес: @realEstate.Address</MudText>
+                    <MudText Typo="Typo.body2">Имеется парковка: @realEstate.HasParking.ToRus()</MudText>
+                    <MudText Typo="Typo.body2">Цена за месяц: @realEstate.Price руб.</MudText>
+                    <MudText Typo="Typo.body2">Площадь: @realEstate.Area м²</MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton OnClick="@(() => NavigationManager.NavigateTo($"/RealEstate/{realEstate.Id}"))">Детали</MudButton>
+                    <AuthorizeView Roles="Client">
+                        <MudButton Color="Color.Primary">Записаться</MudButton>
+                    </AuthorizeView>
+                    
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+    </MudGrid>
 
-<AuthorizeView Roles="Client">
-    <MudText Typo="Typo.h3">check</MudText>
-</AuthorizeView>
 @code {
-    
+    string _findString;
+    int _userId = 0; 
+    IEnumerable<ReadRealEstateDto> _realEstates = new HashSet<ReadRealEstateDto>();
+    IEnumerable<ReadRealEstateDto> _realEstatesFinded = new HashSet<ReadRealEstateDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _realEstates = await RealEstateService.Get(true);
+        _realEstatesFinded = _realEstates;
+        var claimId = (await AuthState.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(c => c.Type == "Sub");
+        if (claimId != null)
+        {
+        _userId = int.Parse(claimId.Value);
+        }
+    }
+
+    private void HandleIntervalElapsed()
+    {
+        if (_findString == "")
+        {
+            _realEstatesFinded = _realEstates;
+        }
+        else
+        {
+            _realEstatesFinded = _realEstates.Where(r => r.Name.ToLower().Contains(_findString.ToLower()) || r.Address.ToLower().Contains(_findString.ToLower())).ToList();
+        }
+    }
 }

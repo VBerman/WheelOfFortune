@@ -91,12 +91,14 @@ namespace WheelOfFortune.Server.Controllers
         public async Task<IActionResult> Get(int realEstateId)
         {
 
-            var result = await _context.RealEstates.FirstOrDefaultAsync(r => r.Id == realEstateId);
+            var result = await _context.RealEstates.Include(r => r.Landlord).FirstOrDefaultAsync(r => r.Id == realEstateId);
             if (result is null)
             {
                 return NotFound();
             }
-            return Ok(_mapper.Map<ReadRealEstateDto>(result));
+            var response = _mapper.Map<ReadRealEstateDto>(result);
+            response.LandLordFullName = result.Landlord.FullName;
+            return Ok(response);
         }
 
     }

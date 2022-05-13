@@ -1,5 +1,11 @@
-﻿<MudNavMenu>
+﻿@using Microsoft.AspNetCore.Components.Authorization
+<MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Недвижимость</MudNavLink>
-    <MudNavLink Href="counter" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
-    <MudNavLink Href="fetchdata" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Fetch data</MudNavLink>
+    <AuthorizeView Roles="Landlord">
+        <MudNavLink Href="RealEstate/Create" ForceLoad=false Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Добавить недвижимость</MudNavLink>
+    </AuthorizeView>
+    <AuthorizeView>
+        <MudNavLink Href="@($"Profile/{context.User.Claims.FirstOrDefault(c => c.Type == "Sub")?.Value}")" ForceLoad=false Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountCircle">Мой профиль</MudNavLink>
+        
+    </AuthorizeView>
 </MudNavMenu>

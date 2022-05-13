@@ -11,11 +11,11 @@ namespace WheelOfFortune.Client.Extensions
         {
             if (result == true)
             {
-                snackbar.Add("Successfully " + action, Severity.Success);
+                snackbar.Add("Успешно " + action, Severity.Success);
             }
             else
             {
-                snackbar.Add("Error " + action, Severity.Error);
+                snackbar.Add("Ошибка", Severity.Error);
             }
             return snackbar;
         }
