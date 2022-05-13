@@ -100,6 +100,23 @@ namespace WheelOfFortune.Server.Controllers
             response.LandLordFullName = result.Landlord.FullName;
             return Ok(response);
         }
+        [HttpDelete("{realEstateId:int}")]
+        [Authorize(Roles = "Admin,Landlord")]
+        public async Task<IActionResult> Delete(int realEstateId)
+        {
+            var realEstate = await _context.RealEstates.FirstOrDefaultAsync(r => r.Id == realEstateId);
+            if (realEstate is null)
+            {
+                return NotFound();
+            }
+            if (User.IsInRole("Landlord") & int.Parse(User.Claims.FirstOrDefault(c => c.Type == "Sub")?.Value) == realEstate.LandlordId)
+            {
+                return Forbid();
+            }
+            _context.RealEstates.Remove(realEstate);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
 
     }
 }

@@ -9,6 +9,7 @@ using System.Text;
 using WheelOfFortune.Server.Services;
 using WheelOfFortune.Shared;
 using WheelOfFortune.Shared.Model;
+using WheelOfFortune.Shared.Model.RealEstate;
 using WheelOfFortune.Shared.Model.Tokens;
 using WheelOfFortune.Shared.Model.User;
 using Crypt = BCrypt.Net.BCrypt;
@@ -30,7 +31,6 @@ namespace WheelOfFortune.Server.Controllers
             _jwtTokenService = jwtTokenService;
             _configuration = configuration;
         }
-        [HttpGet]
 
 
         [HttpPost]
@@ -130,6 +130,31 @@ namespace WheelOfFortune.Server.Controllers
             return Ok(tokenPair);
         }
 
+        [HttpGet("{userId:int}")]
+        [Authorize]
+        public async Task<IActionResult> Profile(int userId)
+        {
+            var user = await _context.Users.Include(u => u.RealEstates).FirstOrDefaultAsync(u => u.Id == userId);
+            if (user is null)
+            {
+                return NotFound();
+            }
+            var userProfile = _mapper.Map<ProfileUserDto>(user);
+
+            if (int.Parse(User.Claims.FirstOrDefault(c => c.Type == "Sub")?.Value) == user.Id)
+            {
+                userProfile.RealEstates = user.RealEstates.Select(r => _mapper.Map<ReadRealEstateDto>(r));
+                if (User.IsInRole("Admin"))
+                {
+                    userProfile.NotConfirmedRealEstates = _context.RealEstates.Where(r => !r.IsConfirmed).Select(r => _mapper.Map<ReadRealEstateDto>(r)); 
+                }
+            }
+            else
+            {
+                userProfile.RealEstates = user.RealEstates.Where(r => r.IsConfirmed == true).Select(r => _mapper.Map<ReadRealEstateDto>(r));
+            }
+            return Ok(userProfile);
+        }
         
 
     }
