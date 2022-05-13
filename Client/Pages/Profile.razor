@@ -1,7 +1,58 @@
 ﻿@page "/Profile/{Id:int}"
+@using Microsoft.AspNetCore.Components.Authorization
+@using WheelOfFortune.Client.Components
+@using WheelOfFortune.Client.Services
+@using WheelOfFortune.Shared.Enums
+@using WheelOfFortune.Shared.Model.RealEstate
+@using WheelOfFortune.Shared.Model.User
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthState
 
-<h3>Profile</h3>
+@if (_profile == null)
+{
+    <MudText Typo=Typo.h3>Искомый профиль не найден</MudText>
+}
+else
+{
+    <MudText Typo=Typo.h3>Профиль</MudText>
+    <MudTextField Label="ФИО" @bind-Value=_profile.FullName ReadOnly=true />
+    <MudTextField Label="Email" @bind-Value=_profile.Email ReadOnly=true />
+    <MudTextField Label="Роль в системе" @bind-Value=_profile.Role ReadOnly=true />
+    @switch (_profile.Role)
+    {
+        case Role.Admin:
+            if (_userId == _profile.Id)
+            {
+                <TableRealEstate Header="Недвижимость, ожидающая подтверждения" readRealEstates=_profile.NotConfirmedRealEstates/>
+            }
+            break;
+        case Role.Landlord:
+            <TableRealEstate Header="Опубликованная недвижимость" readRealEstates=@(_profile.RealEstates.Where(r => r.IsConfirmed))/>
+            if (_userId == _profile.Id)
+            {
+                <TableRealEstate Header="Недвижимость, ожидающая подтверждения" readRealEstates=@(_profile.RealEstates.Where(r => !r.IsConfirmed))/>
+            }
+            break;
+    }
+}
 
 @code {
+    [Parameter]
+    public int Id { get; set; }
+    ProfileUserDto _profile;
+    int _userId;
 
+    protected override async Task OnInitializedAsync()
+    {
+        _profile = await AuthService.Profile(Id);
+
+        var user = (await AuthState.GetAuthenticationStateAsync()).User;
+        var claimId = user.Claims.FirstOrDefault(c => c.Type == "Sub");
+        if (claimId is not null)
+        {
+            _userId = int.Parse(claimId.Value);
+        }
+
+    }
 }

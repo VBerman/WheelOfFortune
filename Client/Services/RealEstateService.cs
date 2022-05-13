@@ -55,5 +55,12 @@ namespace WheelOfFortune.Client.Services
             }
             return "Error";
         }
+        public async Task<bool> Delete(int realEstateId)
+        {
+            var response = await _httpClient.DeleteAsync($"api/RealEstate/Delete/{realEstateId}");
+            return response.IsSuccessStatusCode;
+        }
+
+
     }
 }

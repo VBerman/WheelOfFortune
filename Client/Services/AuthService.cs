@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using WheelOfFortune.Client.Providers;
 using WheelOfFortune.Shared.Model.Tokens;
 using WheelOfFortune.Shared.Model.User;
@@ -13,6 +14,7 @@ namespace WheelOfFortune.Client.Services
     {
         Task<bool> Login(AuthenticateUserDto loginModel);
         Task<bool> Register(RegisterUserDto registerModel);
+        Task<ProfileUserDto?> Profile(int id);
     }
 
     public class AuthService : IAuthService
@@ -55,6 +57,14 @@ namespace WheelOfFortune.Client.Services
             var response = await _httpClient.PostAsJsonAsync("api/User/Register", registerModel);
             return response.IsSuccessStatusCode;
 
+        }
+        public async Task<ProfileUserDto?> Profile(int id)
+        {
+            var options = new JsonSerializerOptions();
+            options.Converters.Add(new JsonStringEnumConverter());
+            options.PropertyNameCaseInsensitive = true;
+            var response = await _httpClient.GetFromJsonAsync<ProfileUserDto>($"api/User/Profile/{id}", options);
+            return response;
         }
     }
 }

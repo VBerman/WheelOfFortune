@@ -1,0 +1,35 @@
+﻿@using WheelOfFortune.Shared.Model.RealEstate
+@using Extensions
+@inject NavigationManager NavigationManager
+<MudText Style="margin-top:15px" Typo=Typo.h4>@Header</MudText>
+<MudTable Items=@(readRealEstates.Select((r, i) => new { Number = i + 1, RealEstate = r })) Hover=true OnRowClick="ClickRow" T=dynamic>
+    <HeaderContent>
+        <MudTh>#</MudTh>
+        <MudTh>Наименование</MudTh>
+        <MudTh>Адрес</MudTh>
+        <MudTh>Безопасность</MudTh>
+        <MudTh>Есть парковка</MudTh>
+        <MudTh>Площадь</MudTh>
+        <MudTh>Цена</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="#">@context.Number</MudTd>
+        <MudTd DataLabel="Наименование">@context.RealEstate.Name</MudTd>
+        <MudTd DataLabel="Адрес">@context.RealEstate.Address</MudTd>
+        <MudTd DataLabel="Безопасность">@context.RealEstate.Security</MudTd>
+        <MudTd DataLabel="Есть парковка">@(context.RealEstate.HasParking ? "Да" : "Нет")</MudTd>
+        <MudTd DataLabel="Площадь">@context.RealEstate.Area</MudTd>
+        <MudTd DataLabel="Цена">@context.RealEstate.Price</MudTd>
+    </RowTemplate>
+</MudTable>
+@code {
+    [Parameter]
+    public IEnumerable<ReadRealEstateDto> readRealEstates { get; set; }
+    [Parameter]
+    public string Header { get; set; }
+
+    private void ClickRow(TableRowClickEventArgs<dynamic> choosedRealEstate)
+    {
+        NavigationManager.NavigateTo($"RealEstate/{choosedRealEstate.Item.RealEstate.Id}");
+    }
+}

@@ -33,10 +33,16 @@ else
                 <MudLink Href="#">@_realEstate.LandLordFullName</MudLink>
             </MudField>
         }
-        @if (!_isReadOnly)
-        {
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Style="float:right; margin-top:15px">@(_isCreate ? "Создать" : "Обновить")</MudButton>
-        }
+        <div style="margin-top:20px;display:flex;justify-content:end;">
+            @if ((!_isReadOnly | _isAdmin) & !_isCreate)
+            {
+                <MudButton Color=Color.Error OnClick=Delete>Удалить</MudButton>
+            }
+            @if (!_isReadOnly)
+            {
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">@(_isCreate ? "Создать" : "Обновить")</MudButton>
+            }
+        </div>
     </EditForm>
     @if (!_isCreate)
     {
@@ -127,6 +133,12 @@ else
         var result = await RealEstateService.Create(Mapper.Map<CreateRealEstateDto>(_realEstate));
         Snackbar.Report(result != "Error", "создано");
         if (result != "Error") { NavigationManager.NavigateTo($"/RealEstate/{result}", true); }
+    }
+    private async Task Delete()
+    {
+        var result = await RealEstateService.Delete(_realEstate.Id);
+        Snackbar.Report(result, "удалено");
+        if (result) { NavigationManager.NavigateTo($"/"); }
     }
 
 }

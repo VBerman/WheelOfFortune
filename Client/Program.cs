@@ -21,5 +21,4 @@ builder.Services.AddScoped<AuthenticationStateProvider, ApiAuthenticationStatePr
 builder.Services.AddScoped<RealEstateService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddAutoMapper(Assembly.GetAssembly(typeof(RealEstateMappingProfile)));
-
 await builder.Build().RunAsync();
