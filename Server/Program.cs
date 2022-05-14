@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,5 +86,4 @@ app.MapControllers();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapFallbackToFile("index.html");
-
 app.Run();
