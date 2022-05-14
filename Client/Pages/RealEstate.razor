@@ -10,7 +10,7 @@
 @inject IMapper Mapper
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
-
+@inject IDialogService DialogService
 @if (_realEstate is null)
 {
     <MudText Typo=Typo.h3>Искомая недвижимость не найдена или не подтверждена администратором</MudText>
@@ -33,13 +33,24 @@ else
                 <MudLink Href="#">@_realEstate.LandLordFullName</MudLink>
             </MudField>
         }
+        <div style="margin-top:20px;display:flex;justify-content:center;">
+
+            <MudImage ObjectFit="ObjectFit.Fill" Src=@_realEstate.ImagePath Width=500 Height=261></MudImage>
+        </div>
         <div style="margin-top:20px;display:flex;justify-content:end;">
             @if ((!_isReadOnly | _isAdmin) & !_isCreate)
             {
-                <MudButton Color=Color.Error OnClick=Delete>Удалить</MudButton>
+                <MudButton Style="margin-right:10px" Color=Color.Error OnClick=Delete>Удалить</MudButton>
             }
             @if (!_isReadOnly)
             {
+                <InputFile id="fileInput" OnChange="UploadFile" hidden />
+                <MudFab HtmlTag="label"
+                Color="Color.Secondary"
+                Icon="@Icons.Filled.Image"
+                Label="Load picture"
+                Style="margin-right:10px"
+                for="fileInput" />
                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">@(_isCreate ? "Создать" : "Обновить")</MudButton>
             }
         </div>
@@ -53,7 +64,7 @@ else
                 <MudCheckBox Label="Подверждено" @bind-Checked=_realEstate.IsConfirmed ReadOnly="@(!_isAdmin)" For=@(() => _realEstate.IsConfirmed) />
                 @if (!_realEstate.IsConfirmed)
                 {
-                    <MudTextField Lines="4" @bind-Value=_realEstate.RejectionReason Label="Причина отказа" For=@(() => _realEstate.RejectionReason) />
+                    <MudTextField ReadOnly=@(!_isAdmin) Lines="4" @bind-Value=_realEstate.RejectionReason Label="Причина отказа" For=@(() => _realEstate.RejectionReason) />
                 }
                 @if (_isAdmin)
                 {
@@ -115,10 +126,16 @@ else
 
     private async Task Update()
     {
-        var result = await RealEstateService.Update(Mapper.Map<UpdateRealEstateDto>(_realEstate));
-        Snackbar.Report(result, "обновлено");
-        _realEstate.IsConfirmed = false;
-        _realEstate.RejectionReason = "Ещё не проверена";
+        var dialogResult = await DialogService.Warning("Вы уверены, что хотите обновить недвижимость? Прежде чем недвижимость попадет в поиск, придется дождаться подтверждения администратора.");
+        if (dialogResult == true)
+        {
+            var result = await RealEstateService.Update(Mapper.Map<UpdateRealEstateDto>(_realEstate));
+            Snackbar.Report(result, "обновлено");
+            _realEstate.IsConfirmed = false;
+            _realEstate.RejectionReason = "Ещё не проверена";
+
+        }
+
 
 
 
@@ -136,9 +153,26 @@ else
     }
     private async Task Delete()
     {
-        var result = await RealEstateService.Delete(_realEstate.Id);
-        Snackbar.Report(result, "удалено");
-        if (result) { NavigationManager.NavigateTo($"/"); }
+        var dialogResult = await DialogService.Warning("Вы уверены, что хотите удалить недвижимость?");
+        if (dialogResult == true)
+        {
+            var result = await RealEstateService.Delete(_realEstate.Id);
+            Snackbar.Report(result, "удалено");
+            if (result) { NavigationManager.NavigateTo($"/"); }
+        }
     }
 
+    private async Task UploadFile(InputFileChangeEventArgs inputFileChangeEvent)
+    {
+        var file = inputFileChangeEvent.File;
+        if (file.Size > 5242880)
+        {
+            Snackbar.Add("Размер картинки не может превышать 5 мб", Severity.Error);
+            return; 
+        }
+        var buffer = new byte[file.Size];
+        await file.OpenReadStream(5242880).ReadAsync(buffer);
+        _realEstate.ImagePath = $"data:image/png;base64,{Convert.ToBase64String(buffer)}";
+        StateHasChanged();
+    }
 }

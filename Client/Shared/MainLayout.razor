@@ -15,7 +15,7 @@
         <MudSpacer />
         <AuthorizeView>
             <Authorized>
-                <MudLink Color=Color.Secondary onclick="@(() => ((ApiAuthenticationStateProvider) AuthStateProvider).MarkUserAsLoggedOut())">Выйти</MudLink>
+                <MudLink Color=Color.Secondary Href="/" onclick="@(() => ((ApiAuthenticationStateProvider) AuthStateProvider).MarkUserAsLoggedOut())">Выйти</MudLink>
             </Authorized>
             <NotAuthorized>
                 <MudLink Color=Color.Secondary Href="/login">Войти</MudLink>
