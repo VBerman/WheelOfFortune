@@ -1,0 +1,57 @@
+﻿@using WheelOfFortune.Client.Services
+@using WheelOfFortune.Shared.Model.RealEstate
+@using WheelOfFortune.Shared.Model.Record
+@inject IRecordService RecordService
+@inject ISnackbar Snackbar
+<MudDialog>
+    <DialogContent>
+        <MudText Typo=Typo.h6>Выберите время встречи</MudText>
+        <MudDatePicker @bind-Date=_date>Выберите дату</MudDatePicker>
+        <MudTimePicker @bind-Time=_time>Выберите время</MudTimePicker>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick=@(() => MudDialog.Cancel())>Отмена</MudButton>
+        <MudButton OnClick=@(() => CreateRecord())>Записаться на просмотр</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public ReadRealEstateDto RealEstateDto { get; set; }
+    [Parameter] public int UserId { get; set; }
+    DateTime? _date;
+    TimeSpan? _time;
+    CreateRecordDto _createRecordDto;
+    protected override async Task OnInitializedAsync()
+    {
+        _createRecordDto = new CreateRecordDto()
+            {
+                ClientId = UserId,
+                RealEstateId = RealEstateDto.Id
+
+            };
+    }
+
+    private async Task CreateRecord()
+    {
+        if (_date is null | _time is null)
+        {
+            Snackbar.Add("Введите дату и время", Severity.Error);
+        }
+        else
+        {
+            _createRecordDto.DateTime = _date.Value.Add(_time.Value);
+            var result = await RecordService.Create(_createRecordDto);
+            if (result == 0)
+            {
+                Snackbar.Add("Не удалось создать встречу", Severity.Error);
+            }
+            else
+            {
+                Snackbar.Add("Встреча успешно создана", Severity.Success);
+                MudDialog.Close();
+            }
+        }
+    }
+
+}

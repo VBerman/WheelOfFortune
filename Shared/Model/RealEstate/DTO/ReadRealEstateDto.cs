@@ -35,5 +35,7 @@ namespace WheelOfFortune.Shared.Model.RealEstate
         public bool IsConfirmed { get; set; }
         public string? RejectionReason { get; set; }
 
+        public string? ImagePath { get; set; }
+
     }
 }

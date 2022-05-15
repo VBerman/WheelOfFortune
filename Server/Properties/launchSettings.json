@@ -5,7 +5,8 @@
     "iisExpress": {
       "applicationUrl": "http://localhost:28725",
       "sslPort": 44342
-    }
+    },
+    "maxRequestBodySize":  10000000
   },
   "profiles": {
     "IIS Express": {

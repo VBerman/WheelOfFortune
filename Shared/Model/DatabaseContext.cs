@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using WheelOfFortune.Shared.Model.RealEstate;
+using WheelOfFortune.Shared.Model.Record;
 using WheelOfFortune.Shared.Model.Tokens;
 using WheelOfFortune.Shared.Model.User;
 namespace WheelOfFortune.Shared.Model
@@ -10,6 +11,7 @@ namespace WheelOfFortune.Shared.Model
 
         public DbSet<UserEntity> Users { get; set; }
         public DbSet<RealEstateEntity> RealEstates { get; set; }
+        public DbSet<RecordEntity> Records { get; set; }
         public DbSet<RefreshTokenEntity> RefreshTokens { get; set; }
         public DatabaseContext(DbContextOptions<DatabaseContext> options)
             : base(options) { }

@@ -2,6 +2,8 @@
 @page "/RealEstate/create"
 @using AutoMapper
 @using Microsoft.AspNetCore.Components.Authorization
+@using System.Net.Http.Headers
+@using WheelOfFortune.Client.Dialogs
 @using WheelOfFortune.Client.Services
 @using WheelOfFortune.Shared.Model.RealEstate
 @using Extensions
@@ -10,7 +12,8 @@
 @inject IMapper Mapper
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
-
+@inject IDialogService DialogService
+@inject HttpClient HttpClient
 @if (_realEstate is null)
 {
     <MudText Typo=Typo.h3>Искомая недвижимость не найдена или не подтверждена администратором</MudText>
@@ -30,16 +33,30 @@ else
         @if (!_isCreate)
         {
             <MudField Label="Владелец">
-                <MudLink Href="#">@_realEstate.LandLordFullName</MudLink>
+                <MudLink Href="@("profile/" + _realEstate.LandlordId)">@_realEstate.LandLordFullName</MudLink>
             </MudField>
         }
+        <div style="margin-top:20px;display:flex;justify-content:center;">
+
+            <MudImage ObjectFit="ObjectFit.Fill" Src=@_realEstate.ImagePath Width=500 Height=261></MudImage>
+        </div>
         <div style="margin-top:20px;display:flex;justify-content:end;">
+            <AuthorizeView Roles="Client" Context="Client">
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick=@(() => ShowCreateRecord(_realEstate))>Записаться</MudButton>
+            </AuthorizeView>
             @if ((!_isReadOnly | _isAdmin) & !_isCreate)
             {
-                <MudButton Color=Color.Error OnClick=Delete>Удалить</MudButton>
+                <MudButton Style="margin-right:10px" Color=Color.Error OnClick=Delete>Удалить</MudButton>
             }
             @if (!_isReadOnly)
             {
+                <InputFile id="fileInput" OnChange="UploadFile" hidden />
+                <MudFab HtmlTag="label"
+                Color="Color.Secondary"
+                Icon="@Icons.Filled.Image"
+                Label="Загрузить изображение"
+                Style="margin-right:10px"
+                for="fileInput" />
                 <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">@(_isCreate ? "Создать" : "Обновить")</MudButton>
             }
         </div>
@@ -53,18 +70,16 @@ else
                 <MudCheckBox Label="Подверждено" @bind-Checked=_realEstate.IsConfirmed ReadOnly="@(!_isAdmin)" For=@(() => _realEstate.IsConfirmed) />
                 @if (!_realEstate.IsConfirmed)
                 {
-                    <MudTextField Lines="4" @bind-Value=_realEstate.RejectionReason Label="Причина отказа" For=@(() => _realEstate.RejectionReason) />
+                    <MudTextField ReadOnly=@(!_isAdmin) Lines="4" @bind-Value=_realEstate.RejectionReason Label="Причина отказа" For=@(() => _realEstate.RejectionReason) />
                 }
                 @if (_isAdmin)
                 {
-                    <MudButton ButtonType="ButtonType.Submit" Style="float:right; margin-top:15px">Обновить</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Style="float:right; margin-top:15px">Обновить</MudButton>
                 }
             </EditForm>
         </AuthorizeView>
 
     }
-
-
 }
 
 
@@ -75,6 +90,7 @@ else
     bool _isReadOnly = true;
     bool _isAdmin = false;
     bool _isCreate = false;
+    int _userId;
     protected override async Task OnInitializedAsync()
     {
         var user = (await AuthState.GetAuthenticationStateAsync()).User;
@@ -90,10 +106,11 @@ else
             if (_realEstate is not null)
             {
                 var claimId = user.Claims.FirstOrDefault(c => c.Type == "Sub");
+                
                 if (claimId is not null)
                 {
-                    var userId = int.Parse(claimId.Value);
-                    if (userId == _realEstate.LandlordId)
+                    _userId = int.Parse(claimId.Value);
+                    if (_userId == _realEstate.LandlordId)
                     {
                         _isReadOnly = false;
                     }
@@ -115,10 +132,16 @@ else
 
     private async Task Update()
     {
-        var result = await RealEstateService.Update(Mapper.Map<UpdateRealEstateDto>(_realEstate));
-        Snackbar.Report(result, "обновлено");
-        _realEstate.IsConfirmed = false;
-        _realEstate.RejectionReason = "Ещё не проверена";
+        var dialogResult = await DialogService.Warning("Вы уверены, что хотите обновить недвижимость? Прежде чем недвижимость попадет в поиск, придется дождаться подтверждения администратора.");
+        if (dialogResult == true)
+        {
+            var result = await RealEstateService.Update(Mapper.Map<UpdateRealEstateDto>(_realEstate));
+            Snackbar.Report(result, "обновлено");
+            _realEstate.IsConfirmed = false;
+            _realEstate.RejectionReason = "Ещё не проверена";
+
+        }
+
 
 
 
@@ -136,9 +159,39 @@ else
     }
     private async Task Delete()
     {
-        var result = await RealEstateService.Delete(_realEstate.Id);
-        Snackbar.Report(result, "удалено");
-        if (result) { NavigationManager.NavigateTo($"/"); }
+        var dialogResult = await DialogService.Warning("Вы уверены, что хотите удалить недвижимость?");
+        if (dialogResult == true)
+        {
+            var result = await RealEstateService.Delete(_realEstate.Id);
+            Snackbar.Report(result, "удалено");
+            if (result) { NavigationManager.NavigateTo($"/"); }
+        }
     }
 
+    private async Task UploadFile(InputFileChangeEventArgs inputFileChangeEvent)
+    {
+        var file = inputFileChangeEvent.File;
+        long maxFileSize = 1024 * 1024 * 15;
+        if (file.Size > maxFileSize)
+        {
+            Snackbar.Add("Размер картинки не может превышать 15 мб", Severity.Error);
+            return;
+        }
+        var content = new MultipartFormDataContent();
+        content.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data");
+
+        content.Add(new StreamContent(file.OpenReadStream(maxFileSize), Convert.ToInt32(file.Size)), "Image", file.Name);
+        var result = await HttpClient.PostAsync("api/Image", content);
+        if (result.IsSuccessStatusCode)
+        {
+            _realEstate.ImagePath = await result.Content.ReadAsStringAsync();
+        }
+    }
+
+    private async Task ShowCreateRecord(ReadRealEstateDto readRealEstateDto)
+    {
+        var parameters = new DialogParameters() { ["UserId"] = _userId, ["RealEstateDto"] = readRealEstateDto };
+        var dialog = DialogService.Show<RecordCreateDialog>("Записаться на встречу", parameters);
+
+    }
 }

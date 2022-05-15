@@ -22,6 +22,6 @@ namespace WheelOfFortune.Shared.Model.RealEstate
         [Range(0, 100000000)]
         public decimal Price { get; set; }
         public string? AdditionalInfo { get; set; }
-
+        public string? ImagePath { get; set; }
     }
 }

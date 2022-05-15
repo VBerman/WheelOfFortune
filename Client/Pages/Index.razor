@@ -1,23 +1,50 @@
 ﻿@page "/"
 @using Services
+@using WheelOfFortune.Client.Dialogs
 @using WheelOfFortune.Client.Providers
 @using WheelOfFortune.Shared.Model.RealEstate
 @using WheelOfFortune.Shared.Model.User
 @using Microsoft.AspNetCore.Components.Authorization
 @using Extensions
+@using WheelOfFortune.Shared.ViewModel
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager NavigationManager
 @inject RealEstateService RealEstateService
+@inject IDialogService DialogService
 <PageTitle>Index</PageTitle>
 
 <MudText Typo="Typo.h3" GutterBottom="true">Недвижимость, доступная для аренды</MudText>
-<MudTextField Style="margin-bottom:15px" @bind-Value=@_findString DebounceInterval="500" Clearable="true" OnDebounceIntervalElapsed="HandleIntervalElapsed" Label="Поиск" Adornment="Adornment.End" AdornmentIcon="@Icons.Filled.Search"></MudTextField>
+<MudStack Row=true>
+    <MudTextField Style="margin-bottom:15px" @bind-Value=@_findString DebounceInterval="500" Clearable="true" OnDebounceIntervalElapsed="Search" Label="Поиск" Adornment="Adornment.End" AdornmentIcon="@Icons.Filled.Search"></MudTextField>
+    <MudCheckBox @bind-Checked=_isVisibleOptions>Опции</MudCheckBox>
+</MudStack>
+@if (_isVisibleOptions)
+{
+    <EditForm Model=_searchModel OnValidSubmit=Search>
+        <DataAnnotationsValidator />
+        <MudStack Row=true>
+
+            <MudField Variant=Variant.Outlined Label="Площадь">
+                <MudNumericField Format="F2" @bind-Value=_searchModel.MinArea Label="От" />
+                <MudNumericField Format="F2" @bind-Value=_searchModel.MaxArea Label="До" />
+            </MudField>
+            <MudField Variant=Variant.Outlined Label="Цена в месяц">
+                <MudNumericField Format="F2" @bind-Value=_searchModel.MinPrice Label="От" />
+                <MudNumericField Format="F2" @bind-Value=_searchModel.MaxPrice Label="До" />
+            </MudField>
+            <MudCheckBox TriState=true @bind-Checked=_searchModel.HasParking>Парковка</MudCheckBox>
+        </MudStack>
+        <MudStack AlignItems=AlignItems.End Style="margin-bottom:15px">
+            <MudButton Color=Color.Primary ButtonType=ButtonType.Submit Variant=Variant.Filled>Поиск</MudButton>
+        </MudStack>
+    </EditForm>
+}
 <MudGrid>
     @foreach (var realEstate in _realEstatesFinded)
     {
         <MudItem xs="4">
             <MudCard>
-                <MudCardMedia Height="200" Image="https://sun9-32.userapi.com/s/v1/if2/cVDWDAESjHS2Z44iRgxU9igWB21yzV9LOjLuBHFE2VQq852PQStD5eo8KaDLLCqra8ORWXfbYaR96X19SrOe-OWE.jpg?size=800x450&quality=95&type=album" />
+                <MudCardMedia Height="200" Image=@realEstate.ImagePath />
                 <MudCardContent>
                     <MudText Typo="Typo.h5">@realEstate.Name</MudText>
                     <MudText Typo="Typo.body2">Адрес: @realEstate.Address</MudText>
@@ -28,18 +55,20 @@
                 <MudCardActions>
                     <MudButton OnClick="@(() => NavigationManager.NavigateTo($"/RealEstate/{realEstate.Id}"))">Детали</MudButton>
                     <AuthorizeView Roles="Client">
-                        <MudButton Color="Color.Primary">Записаться</MudButton>
+                        <MudButton Color="Color.Primary" OnClick=@(() => ShowCreateRecord(realEstate))>Записаться</MudButton>
                     </AuthorizeView>
-                    
+
                 </MudCardActions>
             </MudCard>
         </MudItem>
     }
     </MudGrid>
 
-@code {
-    string _findString;
-    int _userId = 0; 
+    @code {
+    string _findString = "";
+    int _userId = 0;
+    bool _isVisibleOptions = false;
+    SearchModel _searchModel = new SearchModel();
     IEnumerable<ReadRealEstateDto> _realEstates = new HashSet<ReadRealEstateDto>();
     IEnumerable<ReadRealEstateDto> _realEstatesFinded = new HashSet<ReadRealEstateDto>();
 
@@ -50,19 +79,51 @@
         var claimId = (await AuthState.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(c => c.Type == "Sub");
         if (claimId != null)
         {
-        _userId = int.Parse(claimId.Value);
+            _userId = int.Parse(claimId.Value);
         }
     }
 
-    private void HandleIntervalElapsed()
+    private void Search()
     {
-        if (_findString == "")
-        {
-            _realEstatesFinded = _realEstates;
-        }
-        else
+        if (_findString != "")
         {
             _realEstatesFinded = _realEstates.Where(r => r.Name.ToLower().Contains(_findString.ToLower()) || r.Address.ToLower().Contains(_findString.ToLower())).ToList();
         }
+        else
+        {
+            _realEstatesFinded = _realEstates;
+        }
+        if (_isVisibleOptions)
+        {
+            if (_searchModel.HasParking != null)
+            {
+                _realEstatesFinded = _realEstatesFinded.Where(r => r.HasParking == _searchModel.HasParking);
+            }
+            if (_searchModel.MaxPrice != null)
+            {
+                _realEstatesFinded = _realEstatesFinded.Where(r => r.Price <= _searchModel.MaxPrice);
+            }
+            if (_searchModel.MinPrice != null)
+            {
+                _realEstatesFinded = _realEstatesFinded.Where(r => r.Price >= _searchModel.MinPrice);
+            }
+            if (_searchModel.MaxArea != null)
+            {
+                _realEstatesFinded = _realEstatesFinded.Where(r => r.Area <= _searchModel.MaxArea);
+            }
+            if (_searchModel.MinArea != null)
+            {
+                _realEstatesFinded = _realEstatesFinded.Where(r => r.Area >= _searchModel.MinArea);
+            }
+
+        }
+    }
+
+
+    private void ShowCreateRecord(ReadRealEstateDto readRealEstateDto)
+    {
+        var parameters = new DialogParameters() { ["UserId"] = _userId, ["RealEstateDto"] = readRealEstateDto };
+        var dialog = DialogService.Show<RecordCreateDialog>("Записаться на встречу", parameters);
+
     }
 }

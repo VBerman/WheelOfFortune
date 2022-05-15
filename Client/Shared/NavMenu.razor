@@ -8,4 +8,8 @@
         <MudNavLink Href="@($"Profile/{context.User.Claims.FirstOrDefault(c => c.Type == "Sub")?.Value}")" ForceLoad=false Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountCircle">Мой профиль</MudNavLink>
         
     </AuthorizeView>
+    <AuthorizeView Roles="Landlord,Client">
+        <MudNavLink Href="@($"Record/{context.User.Claims.FirstOrDefault(c => c.Type == "Sub")?.Value}")" ForceLoad=false Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Timer">Мои встречи</MudNavLink>
+        
+    </AuthorizeView>
 </MudNavMenu>
