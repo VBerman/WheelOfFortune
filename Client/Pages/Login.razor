@@ -32,7 +32,16 @@
     private async Task HandleLogin()
     {
         var result = await AuthService.Login(_authenticateUserDto);
-        Snackbar.Report(result, "log in");
-        NavigationManager.NavigateTo("/", true);
+        if (result)
+        {
+            Snackbar.Add("Успешная авторизация", Severity.Success);
+            NavigationManager.NavigateTo("/", true);
+
+        }
+        else
+        {
+            Snackbar.Add("Не удалось авторизоваться (неправильный логин или email)", Severity.Error);
+            
+        }
     }
 }
