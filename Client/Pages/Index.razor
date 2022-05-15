@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using Services
+@using WheelOfFortune.Client.Dialogs
 @using WheelOfFortune.Client.Providers
 @using WheelOfFortune.Shared.Model.RealEstate
 @using WheelOfFortune.Shared.Model.User
@@ -8,6 +9,7 @@
 @inject AuthenticationStateProvider AuthState
 @inject NavigationManager NavigationManager
 @inject RealEstateService RealEstateService
+@inject IDialogService DialogService
 <PageTitle>Index</PageTitle>
 
 <MudText Typo="Typo.h3" GutterBottom="true">Недвижимость, доступная для аренды</MudText>
@@ -28,7 +30,7 @@
                 <MudCardActions>
                     <MudButton OnClick="@(() => NavigationManager.NavigateTo($"/RealEstate/{realEstate.Id}"))">Детали</MudButton>
                     <AuthorizeView Roles="Client">
-                        <MudButton Color="Color.Primary">Записаться</MudButton>
+                        <MudButton Color="Color.Primary" OnClick=@(() => ShowCreateRecord(realEstate))>Записаться</MudButton>
                     </AuthorizeView>
                     
                 </MudCardActions>
@@ -50,7 +52,7 @@
         var claimId = (await AuthState.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(c => c.Type == "Sub");
         if (claimId != null)
         {
-        _userId = int.Parse(claimId.Value);
+            _userId = int.Parse(claimId.Value);
         }
     }
 
@@ -64,5 +66,13 @@
         {
             _realEstatesFinded = _realEstates.Where(r => r.Name.ToLower().Contains(_findString.ToLower()) || r.Address.ToLower().Contains(_findString.ToLower())).ToList();
         }
+    }
+
+
+    private async Task ShowCreateRecord(ReadRealEstateDto readRealEstateDto)
+    {
+        var parameters = new DialogParameters() { ["UserId"] = _userId, ["RealEstateDto"] = readRealEstateDto };
+        var dialog = DialogService.Show<RecordCreateDialog>("Записаться на встречу", parameters);
+
     }
 }

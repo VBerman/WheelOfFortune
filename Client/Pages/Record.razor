@@ -1,0 +1,83 @@
+﻿@page "/Record/{Id:int}"
+@using Microsoft.AspNetCore.Components.Authorization
+@using WheelOfFortune.Client.Components
+@using WheelOfFortune.Client.Services
+@using WheelOfFortune.Shared.Enums
+@using WheelOfFortune.Shared.Model.RealEstate
+@using WheelOfFortune.Shared.Model.Record
+@using WheelOfFortune.Shared.Model.User
+
+@inject IRecordService RecordService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthState
+@inject IRecordService RecordService
+@inject ISnackbar Snackbar
+@if (_userId != Id & _records != null)
+{
+    <MudText Typo=Typo.h3>Искомые встречи не найдены</MudText>
+}
+else
+{
+    <MudText Typo=Typo.h3 Style="margin-bottom: 15px">Планируемые встречи</MudText>
+
+    <MudTable Items=@(_records?.Select((r, i) => new { Number = i + 1, Record = r }))>
+        <HeaderContent>
+            <MudTh>#</MudTh>
+            <MudTh>Пользователь</MudTh>
+            <MudTh>Адрес</MudTh>
+            <MudTh>Время</MudTh>
+            <MudTh>Опции</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="#">@context.Number</MudTd>
+            <MudTd DataLabel="Пользователь">
+                @if (context.Record.ClientId == _userId)
+                {
+                <MudLink Href="@($"Profile/{context.Record.LandlordId}")">@context.Record.LandlordFullName</MudLink>
+                }
+                else
+                {
+                <MudLink Href="@($"Profile/{context.Record.ClientId}")">@context.Record.ClientFullName</MudLink>
+                }
+        </MudTd>
+        <MudTd DataLabel="Адрес">
+            <MudLink Href=@($"RealEstate/{context.Record.RealEstateId}")>@context.Record.Address</MudLink>
+        </MudTd>
+        <MudTd DataLabel="Время">@context.Record.DateTime.ToString("F")</MudTd>
+        <MudTd DataLabel="Опции">
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick=@(() => DeleteRecord(context.Record.Id)) />
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    int _userId;
+    List<ReadRecordDto>? _records;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthState.GetAuthenticationStateAsync()).User;
+        var claimId = user.Claims.FirstOrDefault(c => c.Type == "Sub");
+        if (claimId is not null)
+        {
+            _userId = int.Parse(claimId.Value);
+        }
+        _records = (List<ReadRecordDto>?)(await RecordService.GetRecordsByUser());
+    }
+
+    private async Task DeleteRecord(int id)
+    {
+        if (await RecordService.Delete(id))
+        {
+            Snackbar.Add("Запись успешно удалена", Severity.Success);
+            _records.Remove(_records.First(r => r.Id == id));
+        }
+        else
+        {
+            Snackbar.Add("Ошибка удаления", Severity.Error);
+        }
+    }
+}
