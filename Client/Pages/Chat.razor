@@ -1,0 +1,46 @@
+﻿@page "/chat"
+@using Blazored.LocalStorage
+@using Microsoft.AspNetCore.SignalR.Client
+@using WheelOfFortune.Client.Services
+@using WheelOfFortune.Shared.ViewModel
+@inject NavigationManager NavigationManager
+@inject ILocalStorageService LocalStorageService
+<h3>Chat</h3>
+
+@foreach (var message in _messages)
+{
+    <MudText>@message.Message</MudText>
+}
+
+<MudStack Row=true>
+    <MudTextField @bind-Value=@_messageString />
+    <MudButton OnClick=@(() => Send())>Отправить</MudButton>
+
+</MudStack>
+
+@code {
+    private HubConnection _hubConnection;
+    private List<MessageModel> _messages = new();
+    private string _messageString = "";
+    protected override async Task OnInitializedAsync()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/chathub"), options =>
+            {
+                options.AccessTokenProvider = () => LocalStorageService.GetItemAsStringAsync("AccessToken").AsTask();
+
+            })
+            .Build();
+        _hubConnection.On<MessageModel>("ReceiveMessage", message =>
+            {
+                _messages.Add(message);
+                StateHasChanged();
+            });
+        await _hubConnection.StartAsync();
+    }
+
+    private async Task Send()
+    {
+        await _hubConnection.SendAsync("SendMessage", new MessageModel() { Message = _messageString });
+    }
+}

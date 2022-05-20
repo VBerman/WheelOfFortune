@@ -17,11 +17,11 @@ namespace WheelOfFortune.Shared.Model.Message
         public virtual UserEntity FromUser { get; set; }
 
 
-
         public int ChatId { get; set; }
 
         public virtual ChatEntity Chat { get; set; }
 
+        public string Message { get; set; }
 
 
     }

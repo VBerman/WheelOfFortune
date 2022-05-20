@@ -9,6 +9,7 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Http.Features;
+using WheelOfFortune.Server.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,12 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 {
     var connectionString = configuration.GetConnectionString("MSSQL");
     options.UseSqlServer(connectionString, b => b.MigrationsAssembly("WheelOfFortune.Server"));
+});
+// Add signalr
+builder.Services.AddResponseCompression(opts =>
+{
+    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+        new[] { "application/octet-stream" });
 });
 
 // Add auth services
@@ -58,7 +65,7 @@ builder.Services
         tokenHandler.OutboundClaimTypeMap.Clear();
     });
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-
+builder.Services.AddSignalR();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -83,6 +90,7 @@ app.UseRouting();
 
 app.MapRazorPages();
 app.MapControllers();
+app.MapHub<ChatHub>("/chathub");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapFallbackToFile("index.html");
