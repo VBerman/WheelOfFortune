@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WheelOfFortune.Shared.Enums;
+using WheelOfFortune.Shared.Model.Chat;
+using WheelOfFortune.Shared.Model.Message;
 using WheelOfFortune.Shared.Model.RealEstate;
 using WheelOfFortune.Shared.Model.Record;
 using WheelOfFortune.Shared.Model.Tokens;
@@ -34,5 +36,9 @@ namespace WheelOfFortune.Shared.Model.User
 
         public virtual ICollection<RealEstateEntity> RealEstatesConfirmed { get; set; }
         public virtual ICollection<RefreshTokenEntity> RefreshTokens { get; set; }
+
+        public ICollection<ChatEntity> Chats { get; set; }
+
+        public virtual ICollection <MessageEntity> Messages { get; set; }
     }
 }
