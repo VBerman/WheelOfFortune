@@ -23,6 +23,8 @@ namespace WheelOfFortune.Shared.Model.Message
 
         public string Message { get; set; }
 
+        public DateTime DateTime { get; set; }  
+
 
     }
 }

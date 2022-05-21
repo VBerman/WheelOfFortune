@@ -1,46 +1,92 @@
 ﻿@page "/chat"
+@page "/chat/{ChatId:int}"
 @using Blazored.LocalStorage
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.SignalR.Client
 @using WheelOfFortune.Client.Services
 @using WheelOfFortune.Shared.ViewModel
 @inject NavigationManager NavigationManager
 @inject ILocalStorageService LocalStorageService
-<h3>Chat</h3>
+@inject ChatService ChatService
+@inject AuthenticationStateProvider AuthState
 
-@foreach (var message in _messages)
+@if (_userId == null)
 {
-    <MudText>@message.Message</MudText>
+    <MudText Typo=Typo.h3>Вы не авторизованы</MudText>
+}
+else
+{
+    <h3>Chat</h3>
+
+    <MudGrid>
+        <MudItem xs="3">
+            @foreach (var chat in _chats ?? new List<ChatModel>())
+            {
+                <MudCard>
+                    <MudText>@chat.User.FullName</MudText>
+                    <MudText>@chat.RealEstate.Address</MudText>
+                </MudCard>
+            }
+        </MudItem>
+        <MudItem xs="9">
+            @foreach (var message in _messages)
+            {
+                <MudText>@message.Message</MudText>
+            }
+                <MudStack Row=true>
+                    <MudTextField @bind-Value=@_messageString />
+                    <MudButton OnClick=@(() => Send())>Отправить</MudButton>
+
+                </MudStack>
+        </MudItem>
+    </MudGrid>
 }
 
-<MudStack Row=true>
-    <MudTextField @bind-Value=@_messageString />
-    <MudButton OnClick=@(() => Send())>Отправить</MudButton>
-
-</MudStack>
 
 @code {
+    [Parameter]
+    public int? ChatId { get; set; }
     private HubConnection _hubConnection;
     private List<MessageModel> _messages = new();
     private string _messageString = "";
+    private List<ChatModel>? _chats = new();
+    private ChatModel? _currentChat;
+    private int? _userId;
     protected override async Task OnInitializedAsync()
     {
-        _hubConnection = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("/chathub"), options =>
-            {
-                options.AccessTokenProvider = () => LocalStorageService.GetItemAsStringAsync("AccessToken").AsTask();
 
-            })
-            .Build();
-        _hubConnection.On<MessageModel>("ReceiveMessage", message =>
+        var user = (await AuthState.GetAuthenticationStateAsync()).User;
+        var claimId = user.Claims.FirstOrDefault(c => c.Type == "Sub");
+        if (claimId is not null)
+        {
+            _userId = int.Parse(claimId.Value);
+            _chats = (await ChatService.GetChats()) as List<ChatModel>;
+            if (ChatId != null)
             {
-                _messages.Add(message);
-                StateHasChanged();
-            });
-        await _hubConnection.StartAsync();
+                _currentChat = _chats?.FirstOrDefault(c => c.Id == ChatId);
+            }
+            var token = await LocalStorageService.GetItemAsStringAsync("accessToken");
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl(NavigationManager.ToAbsoluteUri("/hubs/chat"), options =>
+                {
+                    options.AccessTokenProvider = () => Task.FromResult(token);
+                })
+                .WithAutomaticReconnect()
+                .Build();
+            _hubConnection.On<MessageModel>("ReceiveMessage", message =>
+                {
+                    _messages.Add(message);
+                    StateHasChanged();
+                });
+            await _hubConnection.StartAsync();
+        }
     }
 
     private async Task Send()
     {
-        await _hubConnection.SendAsync("SendMessage", new MessageModel() { Message = _messageString });
+        if (_userId != null & _currentChat != null)
+        {
+            await _hubConnection.SendAsync("SendMessage", new MessageModel() { Message = _messageString, ChatId = _currentChat.Id, DateTime = DateTime.UtcNow, FromUserId = _userId.Value });
+        }
     }
 }

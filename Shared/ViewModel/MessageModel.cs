@@ -12,5 +12,6 @@ namespace WheelOfFortune.Shared.ViewModel
         public int FromUserId { get; set; }
         public int ChatId { get; set; }
 
+        public DateTime DateTime { get; set; }
     }
 }

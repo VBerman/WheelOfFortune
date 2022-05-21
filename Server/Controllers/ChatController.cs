@@ -45,24 +45,37 @@ namespace WheelOfFortune.Server.Controllers
         public async Task<IActionResult> CreateChat(int realEstateId)
         {
             var userId = int.Parse(User.Claims.First(c => c.Type == "Sub").Value);
-
-            var findedRealEstate = await _context.RealEstates.FirstOrDefaultAsync(r => r.Id == realEstateId);
+            var findedChat = await _context.Chats.FirstOrDefaultAsync(c => c.RealEstateId == realEstateId & c.Users.Any(u => u.Id == userId));
+            if (findedChat != null)
+            {
+                return Ok(findedChat.Id);
+            }
+            var findedRealEstate = await _context.RealEstates.Include(r => r.Landlord).FirstOrDefaultAsync(r => r.Id == realEstateId);
             if (findedRealEstate == null)
             {
                 return NotFound("RealEstate is missing");
             }
             var newChat = new ChatEntity()
             {
-                RealEstate = findedRealEstate,
+                RealEstateId = findedRealEstate.Id,
                 Users = new List<UserEntity>()
                 {
                     _context.Users.First(u => u.Id == userId),
                     findedRealEstate.Landlord
-                },
+                }
             };
-            await _context.Chats.AddAsync(newChat); 
-            await _context.SaveChangesAsync();
-            return Ok(newChat.Id);
+            try
+            {
+                await _context.Chats.AddAsync(newChat);
+                await _context.SaveChangesAsync();
+                return Ok(newChat.Id);
+
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest();
+            }
         }
 
 
@@ -83,7 +96,7 @@ namespace WheelOfFortune.Server.Controllers
                 return Forbid();
             }
 
-            return Ok(findedChat.Messages);
+            return Ok(_mapper.Map<ICollection<MessageModel>>(findedChat.Messages));
 
         }
 
