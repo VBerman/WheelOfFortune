@@ -70,7 +70,7 @@ namespace WheelOfFortune.Client.Services
 
         public async Task<bool> Update(UpdateUserDto updateModel)
         {
-            var response = await _httpClient.PutAsJsonAsync($"api/User/Update", updateModel);
+            var response = await _httpClient.PostAsJsonAsync($"api/User/Update/{updateModel.Id}", updateModel);
             return response.IsSuccessStatusCode;
         }
     }

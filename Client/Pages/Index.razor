@@ -56,8 +56,8 @@
                 <MudCardActions>
                     <MudButton OnClick="@(() => NavigationManager.NavigateTo($"/RealEstate/{realEstate.Id}"))">Детали</MudButton>
                     <AuthorizeView Roles="Client">
-                        <MudButton Color="Color.Primary" OnClick=@(() => ShowCreateRecord(realEstate))>Записаться</MudButton>
                         <MudButton OnClick=@(() => NavigateChat(realEstate.Id))>Написать владельцу</MudButton>
+                        <MudButton Color="Color.Primary" OnClick=@(() => ShowCreateRecord(realEstate))>Записаться</MudButton>
                     </AuthorizeView>
 
                 </MudCardActions>

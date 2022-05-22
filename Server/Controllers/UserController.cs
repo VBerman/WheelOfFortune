@@ -156,12 +156,12 @@ namespace WheelOfFortune.Server.Controllers
             return Ok(userProfile);
         }
         
-        [HttpPut]
+        [HttpPost("{id:int}")]
         [Authorize]
-        public async Task<IActionResult> Update([FromBody] UpdateUserDto updateUserDto)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateUserDto updateUserDto)
         {
             var userId = int.Parse(User.Claims.First(c => c.Type == "Sub").Value);
-            if (userId != updateUserDto.Id)
+            if (userId != id)
             {
                 return Forbid();
             }
