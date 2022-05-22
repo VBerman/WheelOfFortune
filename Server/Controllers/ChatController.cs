@@ -86,7 +86,7 @@ namespace WheelOfFortune.Server.Controllers
         public async Task<IActionResult> GetChatMessages(int chatId)
         {
             var userId = int.Parse(User.Claims.First(c => c.Type == "Sub").Value);
-            var findedChat = await _context.Chats.FirstOrDefaultAsync(c => c.Id == chatId);
+            var findedChat = await _context.Chats.Include(c => c.Users).Include(c => c.Messages).FirstOrDefaultAsync(c => c.Id == chatId);
             if (findedChat == null)
             {
                 return NotFound();
@@ -95,8 +95,8 @@ namespace WheelOfFortune.Server.Controllers
             {
                 return Forbid();
             }
-
-            return Ok(_mapper.Map<ICollection<MessageModel>>(findedChat.Messages));
+            var result = _mapper.Map<ICollection<MessageModel>>(findedChat.Messages);
+            return Ok(result);
 
         }
 

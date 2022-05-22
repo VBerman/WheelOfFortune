@@ -57,8 +57,10 @@ namespace WheelOfFortune.Client.Services
             {
                 return new List<MessageModel>();
             }
-            var result = JsonSerializer.Deserialize<List<MessageModel>>(await response.Content.ReadAsStringAsync(),
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var options = new JsonSerializerOptions();
+            options.Converters.Add(new JsonStringEnumConverter());
+            options.PropertyNameCaseInsensitive = true;
+            var result = JsonSerializer.Deserialize<List<MessageModel>>(await response.Content.ReadAsStringAsync(), options);
             return result ?? new List<MessageModel>();
         }
     }

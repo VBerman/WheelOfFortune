@@ -9,5 +9,7 @@ namespace WheelOfFortune.Shared.ViewModel
         public ReadRealEstateDto RealEstate { get; set; }
 
         public ReadUserDto User { get; set; }
+
+        public bool IsNewMessage { get; set; } = false;
     }
 }

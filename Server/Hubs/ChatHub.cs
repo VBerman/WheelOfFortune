@@ -45,6 +45,7 @@ namespace WheelOfFortune.Server.Hubs
                 throw new HubException("Not found chat");
             }
             chat.Messages.Add(_mapper.Map<MessageEntity>(message));
+            message.FromUser = _mapper.Map<ReadUserDto>(chat.Users.First(u => u.Id == message.FromUserId));
             await _context.SaveChangesAsync();
             foreach (var item in chat.Users)
             {

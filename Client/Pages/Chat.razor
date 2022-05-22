@@ -9,35 +9,64 @@
 @inject ILocalStorageService LocalStorageService
 @inject ChatService ChatService
 @inject AuthenticationStateProvider AuthState
-
+@inject IJSRuntime JsRuntime
 @if (_userId == null)
 {
     <MudText Typo=Typo.h3>Вы не авторизованы</MudText>
 }
 else
 {
-    <h3>Chat</h3>
 
-    <MudGrid>
+    <MudGrid Style="max-height">
         <MudItem xs="3">
-            @foreach (var chat in _chats ?? new List<ChatModel>())
-            {
-                <MudCard>
-                    <MudText>@chat.User.FullName</MudText>
-                    <MudText>@chat.RealEstate.Address</MudText>
-                </MudCard>
-            }
+            <div class="d-flex flex-column px-4" style="max-height:70vh;min-height:70vh; overflow:scroll;">
+                <MudList Clickable=true @bind-SelectedValue="currentChat" @bind-SelectedItem="_selectedItem">
+                    @foreach (var chat in _chats ?? new List<ChatModel>())
+                    {
+                        <MudListItem Class="pa-0 px-2" Value=@chat>
+                            <div class="d-flex flex-row mt-n1 mb-n1">
+                                <div class="mr-4">
+                                    <MudBadge Class="my-2" Visible=@chat.IsNewMessage Dot=true>
+                                        <MudAvatar Color="Color.Secondary" Style="height:50px; width:50px;">
+                                            @chat.User.Email.ToUpper().FirstOrDefault()
+                                        </MudAvatar>
+                                    </MudBadge>
+
+                                </div>
+                                <div>
+                                    <MudText Typo="Typo.body2" Class="mt-3 mb-n2">@chat.User.Email</MudText>
+                                    <MudText Typo="Typo.caption" Style="font-size: xx-small!important;">@chat.RealEstate.Address</MudText>
+                                </div>
+                            </div>
+                        </MudListItem>
+                    }
+
+                </MudList>
+            </div>
         </MudItem>
         <MudItem xs="9">
-            @foreach (var message in _messages)
-            {
-                <MudText>@message.Message</MudText>
-            }
-                <MudStack Row=true>
-                    <MudTextField @bind-Value=@_messageString />
-                    <MudButton OnClick=@(() => Send())>Отправить</MudButton>
+            <div class="d-flex flex-column px-4" style="max-height:65vh;min-height:65vh; overflow:scroll;" id="chatContainer">
+                @foreach (var message in _messages)
+                {
+                    <div class="d-flex flex-row my-4">
+                        <div class="mr-4">
+                            <MudAvatar Color="Color.Secondary" Style="height:50px; width:50px;">@message.FromUser.Email.ToUpper().FirstOrDefault()</MudAvatar>
+                        </div>
+                        <div>
+                            <MudText Typo="Typo.body1">@message.FromUser.Email</MudText>
+                            <MudText Typo="Typo.caption" Style="font-size: xx-small!important;">@message.DateTime.ToString("dd MMM, yyyy hh:mm tt")</MudText>
+                            <MudText Typo="Typo.body2" Style=" padding: 15px;background-color: var(--mud-palette-background-grey);border-radius: 5px;margin-top:5px">@message.Message</MudText>
+                        </div>
+                    </div>
+                }
+            </div>
+            <MudPaper Elevation="25" Class="d-flex flex-row px-2 mx-4">
+                <MudTextField T="string" Placeholder="Введите ваше сообщение..." DisableUnderLine="true" Class="mt-n2 mx-4"
+                          @bind-Value="_messageString" />
+                <MudButton OnClick=@(() => Send()) StartIcon="@Icons.Material.Outlined.Send" Color="Color.Secondary" ButtonType="ButtonType.Button">Отправить</MudButton>
+            </MudPaper>
 
-                </MudStack>
+
         </MudItem>
     </MudGrid>
 }
@@ -50,7 +79,22 @@ else
     private List<MessageModel> _messages = new();
     private string _messageString = "";
     private List<ChatModel>? _chats = new();
-    private ChatModel? _currentChat;
+    private MudListItem _selectedItem;
+    private object _currentChat;
+    private object currentChat
+    {
+        get
+        {
+            return _currentChat;
+        }
+        set
+        {
+            SelectChat((value as ChatModel).Id);
+            (value as ChatModel).IsNewMessage = false;
+            _currentChat = value;
+        }
+    }
+
     private int? _userId;
     protected override async Task OnInitializedAsync()
     {
@@ -63,7 +107,7 @@ else
             _chats = (await ChatService.GetChats()) as List<ChatModel>;
             if (ChatId != null)
             {
-                _currentChat = _chats?.FirstOrDefault(c => c.Id == ChatId);
+                currentChat = _chats?.FirstOrDefault(c => c.Id == ChatId.Value);
             }
             var token = await LocalStorageService.GetItemAsStringAsync("accessToken");
             _hubConnection = new HubConnectionBuilder()
@@ -75,18 +119,41 @@ else
                 .Build();
             _hubConnection.On<MessageModel>("ReceiveMessage", message =>
                 {
-                    _messages.Add(message);
-                    StateHasChanged();
+                    if (message.ChatId == (currentChat as ChatModel).Id)
+                    {
+
+                        _messages.Add(message);
+                        JsRuntime.InvokeAsync<string>("ScrollToBottom", "chatContainer");
+                        StateHasChanged();
+
+                    }
+                    else
+                    {
+                        _chats.First(c => c.Id == message.ChatId).IsNewMessage = true;
+                        StateHasChanged();
+
+                    }
                 });
             await _hubConnection.StartAsync();
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JsRuntime.InvokeAsync<string>("ScrollToBottom", "chatContainer");
+    }
+
     private async Task Send()
     {
-        if (_userId != null & _currentChat != null)
+        if (_userId != null & _currentChat != null & _messageString != "")
         {
-            await _hubConnection.SendAsync("SendMessage", new MessageModel() { Message = _messageString, ChatId = _currentChat.Id, DateTime = DateTime.UtcNow, FromUserId = _userId.Value });
+            await _hubConnection.SendAsync("SendMessage", new MessageModel() { Message = _messageString, ChatId = (_currentChat as ChatModel).Id, DateTime = DateTime.UtcNow, FromUserId = _userId.Value });
+            _messageString = "";
         }
+    }
+    private async Task SelectChat(int chatId)
+    {
+        _messages = (await ChatService.GetChatMessage(chatId)) as List<MessageModel>;
+        StateHasChanged();
     }
 }
