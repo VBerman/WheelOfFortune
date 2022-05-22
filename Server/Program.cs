@@ -9,6 +9,8 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Http.Features;
+using WheelOfFortune.Server.Hubs;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +32,12 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 {
     var connectionString = configuration.GetConnectionString("MSSQL");
     options.UseSqlServer(connectionString, b => b.MigrationsAssembly("WheelOfFortune.Server"));
+});
+// Add signalr
+builder.Services.AddResponseCompression(opts =>
+{
+    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+        new[] { "application/octet-stream" });
 });
 
 // Add auth services
@@ -56,8 +64,24 @@ builder.Services
         var tokenHandler = options.SecurityTokenValidators.OfType<JwtSecurityTokenHandler>().Single();
         tokenHandler.InboundClaimTypeMap.Clear();
         tokenHandler.OutboundClaimTypeMap.Clear();
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Headers["Authorization"];
+                
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) &
+                    path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken[0].Substring(8).Remove(accessToken[0].Length - 9);
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -83,6 +107,7 @@ app.UseRouting();
 
 app.MapRazorPages();
 app.MapControllers();
+app.MapHub<ChatHub>("/hubs/chat");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapFallbackToFile("index.html");

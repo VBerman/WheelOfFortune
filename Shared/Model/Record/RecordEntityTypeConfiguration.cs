@@ -18,7 +18,8 @@ namespace WheelOfFortune.Shared.Model.Record
                 .OnDelete(DeleteBehavior.NoAction);
             entity.HasOne(r => r.RealEstate)
                 .WithMany(r => r.Records)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(r => r.RealEstateId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

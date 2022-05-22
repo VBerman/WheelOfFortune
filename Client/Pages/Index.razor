@@ -11,6 +11,7 @@
 @inject NavigationManager NavigationManager
 @inject RealEstateService RealEstateService
 @inject IDialogService DialogService
+@inject ChatService ChatService
 <PageTitle>Index</PageTitle>
 
 <MudText Typo="Typo.h3" GutterBottom="true">Недвижимость, доступная для аренды</MudText>
@@ -56,15 +57,16 @@
                     <MudButton OnClick="@(() => NavigationManager.NavigateTo($"/RealEstate/{realEstate.Id}"))">Детали</MudButton>
                     <AuthorizeView Roles="Client">
                         <MudButton Color="Color.Primary" OnClick=@(() => ShowCreateRecord(realEstate))>Записаться</MudButton>
+                        <MudButton OnClick=@(() => NavigateChat(realEstate.Id))>Написать владельцу</MudButton>
                     </AuthorizeView>
 
                 </MudCardActions>
             </MudCard>
         </MudItem>
     }
-    </MudGrid>
+</MudGrid>
 
-    @code {
+@code {
     string _findString = "";
     int _userId = 0;
     bool _isVisibleOptions = false;
@@ -125,5 +127,11 @@
         var parameters = new DialogParameters() { ["UserId"] = _userId, ["RealEstateDto"] = readRealEstateDto };
         var dialog = DialogService.Show<RecordCreateDialog>("Записаться на встречу", parameters);
 
+    }
+
+    private async Task NavigateChat(int realEstateId)
+    {
+        var chatId = await ChatService.CreateChat(realEstateId);
+        NavigationManager.NavigateTo($"/chat/{chatId}");
     }
 }

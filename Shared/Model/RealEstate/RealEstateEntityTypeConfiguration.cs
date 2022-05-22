@@ -16,7 +16,7 @@ namespace WheelOfFortune.Shared.Model.RealEstate
             entity.HasOne(r => r.Landlord)
                 .WithMany(u => u.RealEstates)
                 .HasForeignKey(r => r.LandlordId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             entity.HasOne(r => r.AdminConfirmed)
                 .WithMany(u => u.RealEstatesConfirmed)

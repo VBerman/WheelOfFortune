@@ -19,6 +19,7 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, ApiAuthenticationStateProvider>();
 builder.Services.AddScoped<RealEstateService>();
+builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRecordService, RecordService>();
 builder.Services.AddAutoMapper(Assembly.GetAssembly(typeof(RealEstateMappingProfile)));
