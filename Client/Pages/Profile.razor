@@ -8,7 +8,7 @@
 @inject IAuthService AuthService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthState
-
+@inject ISnackbar Snackbar
 @if (_profile == null)
 {
     <MudText Typo=Typo.h3>Искомый профиль не найден</MudText>
@@ -16,22 +16,26 @@
 else
 {
     <MudText Typo=Typo.h3>Профиль</MudText>
-    <MudTextField Label="ФИО" @bind-Value=_profile.FullName ReadOnly=true />
-    <MudTextField Label="Email" @bind-Value=_profile.Email ReadOnly=true />
+    <MudTextField Label="ФИО" @bind-Value=_profile.FullName ReadOnly=@_readOnly />
+    <MudTextField Label="Email" @bind-Value=_profile.Email ReadOnly=@_readOnly />
     <MudTextField Label="Роль в системе" @bind-Value=_profile.Role ReadOnly=true />
+    @if (!_readOnly)
+    {
+        <MudButton OnClick=@(() => UpdateInfo()) Variant=Variant.Outlined Style="margin-top:10px" Color=Color.Primary>Обновить информацию</MudButton>
+    }
     @switch (_profile.Role)
     {
         case Role.Admin:
             if (_userId == _profile.Id)
             {
-                <TableRealEstate Header="Недвижимость, ожидающая подтверждения" readRealEstates=_profile.NotConfirmedRealEstates/>
+                <TableRealEstate Header="Недвижимость, ожидающая подтверждения" readRealEstates=_profile.NotConfirmedRealEstates />
             }
             break;
         case Role.Landlord:
-            <TableRealEstate Header="Опубликованная недвижимость" readRealEstates=@(_profile.RealEstates.Where(r => r.IsConfirmed))/>
+            <TableRealEstate Header="Опубликованная недвижимость" readRealEstates=@(_profile.RealEstates.Where(r => r.IsConfirmed)) />
             if (_userId == _profile.Id)
             {
-                <TableRealEstate Header="Недвижимость, ожидающая подтверждения" readRealEstates=@(_profile.RealEstates.Where(r => !r.IsConfirmed))/>
+                <TableRealEstate Header="Недвижимость, ожидающая подтверждения" readRealEstates=@(_profile.RealEstates.Where(r => !r.IsConfirmed)) />
             }
             break;
     }
@@ -40,8 +44,9 @@ else
 @code {
     [Parameter]
     public int Id { get; set; }
-    ProfileUserDto _profile;
-    int _userId;
+    private ProfileUserDto _profile;
+    private int _userId;
+    private bool _readOnly;
 
     protected override async Task OnInitializedAsync()
     {
@@ -52,7 +57,20 @@ else
         if (claimId is not null)
         {
             _userId = int.Parse(claimId.Value);
+            _readOnly = !(_userId == Id);
         }
 
+    }
+    private async Task UpdateInfo()
+    {
+        var result = await AuthService.Update(new UpdateUserDto() { Email = _profile.Email, FullName = _profile.FullName, Id = _profile.Id });
+        if (result)
+        {
+            Snackbar.Add("Информация успешно обновлена", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Ошибка обновления информации, почта не уникальна", Severity.Error);
+        }
     }
 }
