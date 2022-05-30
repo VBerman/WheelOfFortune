@@ -9,6 +9,7 @@ using WheelOfFortune.Shared.Model.Chat;
 using WheelOfFortune.Shared.Model.Message;
 using WheelOfFortune.Shared.Model.RealEstate;
 using WheelOfFortune.Shared.Model.Record;
+using WheelOfFortune.Shared.Model.Rent;
 using WheelOfFortune.Shared.Model.Tokens;
 
 namespace WheelOfFortune.Shared.Model.User
@@ -39,6 +40,8 @@ namespace WheelOfFortune.Shared.Model.User
 
         public ICollection<ChatEntity> Chats { get; set; }
 
-        public virtual ICollection <MessageEntity> Messages { get; set; }
+        public virtual ICollection<MessageEntity> Messages { get; set; }
+
+        public virtual ICollection<RentEntity> Rents { get; set; }
     }
 }

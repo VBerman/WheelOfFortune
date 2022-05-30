@@ -100,7 +100,7 @@ namespace WheelOfFortune.Server.Controllers
             response.LandLordFullName = result.Landlord.FullName;
             return Ok(response);
         }
-        [HttpDelete("{realEstateId:int}")]
+        [HttpPost("{realEstateId:int}")]
         [Authorize(Roles = "Admin,Landlord")]
         public async Task<IActionResult> Delete(int realEstateId)
         {

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WheelOfFortune.Shared.Model.Record;
+using WheelOfFortune.Shared.Model.Rent;
 using WheelOfFortune.Shared.Model.User;
 
 namespace WheelOfFortune.Shared.Model.RealEstate
@@ -48,5 +49,7 @@ namespace WheelOfFortune.Shared.Model.RealEstate
         public virtual UserEntity? AdminConfirmed { get; set; }
 
         public virtual ICollection<RecordEntity> Records { get; set; }
+        
+        public virtual ICollection<RentEntity> Rents { get; set; }
     }
 }
