@@ -57,7 +57,7 @@ namespace WheelOfFortune.Client.Services
         }
         public async Task<bool> Delete(int realEstateId)
         {
-            var response = await _httpClient.DeleteAsync($"api/RealEstate/Delete/{realEstateId}");
+            var response = await _httpClient.PostAsJsonAsync<dynamic>($"api/RealEstate/Delete/{realEstateId}", new {});
             return response.IsSuccessStatusCode;
         }
 

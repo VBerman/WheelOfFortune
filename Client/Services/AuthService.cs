@@ -14,6 +14,7 @@ namespace WheelOfFortune.Client.Services
     {
         Task<bool> Login(AuthenticateUserDto loginModel);
         Task<bool> Register(RegisterUserDto registerModel);
+        Task<bool> Update(UpdateUserDto updateModel);
         Task<ProfileUserDto?> Profile(int id);
     }
 
@@ -65,6 +66,12 @@ namespace WheelOfFortune.Client.Services
             options.PropertyNameCaseInsensitive = true;
             var response = await _httpClient.GetFromJsonAsync<ProfileUserDto>($"api/User/Profile/{id}", options);
             return response;
+        }
+
+        public async Task<bool> Update(UpdateUserDto updateModel)
+        {
+            var response = await _httpClient.PostAsJsonAsync($"api/User/Update/{updateModel.Id}", updateModel);
+            return response.IsSuccessStatusCode;
         }
     }
 }

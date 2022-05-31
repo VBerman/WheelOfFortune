@@ -156,6 +156,26 @@ namespace WheelOfFortune.Server.Controllers
             return Ok(userProfile);
         }
         
+        [HttpPost("{id:int}")]
+        [Authorize]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateUserDto updateUserDto)
+        {
+            var userId = int.Parse(User.Claims.First(c => c.Type == "Sub").Value);
+            if (userId != id)
+            {
+                return Forbid();
+            }
+            var uniqueEmailUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == updateUserDto.Email);
+            if (uniqueEmailUser != null & uniqueEmailUser?.Id != userId)
+            {
+                return BadRequest("Email already usage");
+            }
+            
+            var user = await _context.Users.FirstAsync(u => u.Id == userId);
+            _mapper.Map(updateUserDto, user);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
 
     }
 }

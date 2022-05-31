@@ -1,0 +1,65 @@
+﻿@using WheelOfFortune.Client.Services
+@using WheelOfFortune.Shared.Model.RealEstate
+@using WheelOfFortune.Shared.Model.Record
+@using WheelOfFortune.Shared.Model.Rent
+@inject IRentService RentService
+@inject ISnackbar Snackbar
+<MudDialog DisableSidePadding="true">
+    <DialogContent>
+        <MudContainer Style="max-height: 500px; overflow-y: scroll">
+            @if (_rents.Count == 0)
+            {
+                <p> Аренд еще не было</p>
+            }
+            <MudTimeline TimelineAlign=TimelineAlign.Start>
+                @foreach (var rent in _rents)
+                {
+                    <MudTimelineItem Elevation="25" TimelineAlign=TimelineAlign.End Color=@(rent.StartRentDate <= DateTime.Now & rent.EndRentDate >= DateTime.Now ? Color.Secondary : Color.Primary)>
+                        <ItemOpposite>
+                            <MudText GutterBottom="true" Color=@(rent.StartRentDate <= DateTime.Now & rent.EndRentDate >= DateTime.Now ? Color.Secondary : Color.Primary)>@rent.StartRentDate.Date.ToShortDateString() - @rent.EndRentDate.Date.ToShortDateString()</MudText>
+                        </ItemOpposite>
+                        <ItemContent>
+                            <MudStack Elevation="0" Class="mt-n1">
+                                <MudLink Color=@(rent.StartRentDate <= DateTime.Now & rent.EndRentDate >= DateTime.Now ? Color.Secondary : Color.Primary) Underline=Underline.None Href=@($"profile/{rent.ClientId}")>@rent.ClientFullName</MudLink>
+                              
+                                <MudCheckBox T=bool CheckedChanged=@(() => SetDebt(rent)) Label="Долг" Checked=@rent.IsDebt ReadOnly=@(!(rent.StartRentDate <= DateTime.Now & rent.EndRentDate >= DateTime.Now)) />
+                            </MudStack>
+                        </ItemContent>
+                    </MudTimelineItem>
+                }
+            </MudTimeline>
+
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick=@(() => MudDialog.Cancel())>Выйти</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public ReadRealEstateDto RealEstateDto { get; set; }
+    DateRange _dateRange = new DateRange(DateTime.Now.Date, DateTime.Now.AddDays(5).Date);
+    List<ReadRentDto> _rents = new();
+    protected override async Task OnInitializedAsync()
+    {
+        _rents = (await RentService.GetByRealEstate(RealEstateDto.Id)).OrderBy(r => r.StartRentDate).ToList();
+    }
+
+    private async Task<bool> SetDebt(ReadRentDto rent)
+    {
+        if (await RentService.SetDebt(rent.Id))
+        {
+            rent.IsDebt = !rent.IsDebt;
+            return true;
+        }
+        else
+        {
+            Snackbar.Add("Ошибка", Severity.Error);
+
+        }
+        return false;
+
+    }
+
+}

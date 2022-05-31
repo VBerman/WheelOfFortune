@@ -1,0 +1,157 @@
+﻿@page "/Rent/"
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using WheelOfFortune.Client.Components
+@using WheelOfFortune.Client.Services
+@using WheelOfFortune.Shared.Enums
+@using WheelOfFortune.Shared.Model.RealEstate
+@using WheelOfFortune.Shared.Model.Rent
+@using WheelOfFortune.Shared.Model.User
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthState
+@inject IRentService RentService
+@inject ISnackbar Snackbar
+
+@if (_userId == null)
+{
+    <p>У вас нет доступа</p>
+}
+else
+{
+    <MudText Typo=Typo.h3 Style="margin-bottom:15px">Текущие аренды</MudText>
+}
+@if (_user != null)
+{
+
+    @if (_user.IsInRole("Landlord") | _user.IsInRole("Client"))
+    {
+
+
+        <MudStack Style="margin-bottom:15px" Row=true>
+            <MudSelect T=string @bind-Text=_currentRealEstate Placeholder="Фильтрация по недвижимости" SelectedValuesChanged=@(() => Filter())>
+                @foreach (var realEstate in _realEstates)
+                {
+                    <MudSelectItem Value=@realEstate></MudSelectItem>
+                }
+            </MudSelect>
+            <MudCheckBox T=bool Checked=@_isActual CheckedChanged=@(() => Filter()) Label="Только актуальные"></MudCheckBox>
+
+        </MudStack>
+        <MudTable Items=@(_rents.Select((r, i) => new {Index = i + 1, Rent = r})) Hover=true Breakpoint="Breakpoint.Sm">
+            <HeaderContent>
+                <MudTh>#</MudTh>
+                <MudTh>Адрес</MudTh>
+                @if (_user.IsInRole("Landlord"))
+        {
+            <MudTh>Клиент</MudTh>
+        }
+        <MudTh>Начало аренды</MudTh>
+        <MudTh>Окончание аренды</MudTh>
+        <MudTh>Долг</MudTh>
+        <MudTh>Цена в месяц</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="#">@context.Index</MudTd>
+        <MudTd DataLabel="Адрес">
+            <MudLink Href=@($"RealEstate/{@context.Rent.RealEstateId}") Underline=Underline.None>@context.Rent.RealEstateAddress</MudLink>
+        </MudTd>
+        @if (_user.IsInRole("Landlord"))
+                {
+            <MudTd DataLabel="Клиент">
+                <MudLink Href=@($"Profile/{@context.Rent.ClientId}") Underline=Underline.None>@context.Rent.ClientFullName</MudLink>
+            </MudTd>
+                }
+        <MudTd DataLabel="Начало аренды">@context.Rent.StartRentDate.ToShortDateString()</MudTd>
+        <MudTd DataLabel="Окончание аренды">@context.Rent.EndRentDate.ToShortDateString()</MudTd>
+        <MudTd DataLabel="Долг">
+            <MudCheckBox T=bool CheckedChanged=@(() => SetDebt(context.Rent as ReadRentDto)) Checked=context.Rent.IsDebt />
+        </MudTd>
+
+        <MudTd DataLabel="Цена в месяц">@context.Rent.PriceInMonth</MudTd>
+    </RowTemplate>
+</MudTable>
+    }
+}
+
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private int? _userId = null;
+    private ClaimsPrincipal _user;
+    private List<ReadRentDto> _rents = new();
+    private List<string> _realEstates = new();
+    private string _currentRealEstate;
+    private bool _isActual;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        _user = (await AuthState.GetAuthenticationStateAsync()).User;
+
+        var claimId = _user.Claims.FirstOrDefault(c => c.Type == "Sub");
+        if (claimId is not null)
+        {
+            _userId = int.Parse(claimId.Value);
+            if (_user.IsInRole("Landlord"))
+            {
+                _rents = await RentService.GetByLandlord();
+            }
+            else if (_user.IsInRole("Client"))
+            {
+                _rents = await RentService.GetByClient();
+            }
+            _realEstates = _rents.Select(r => r.RealEstateAddress).Distinct().ToList();
+        }
+
+    }
+
+    private async Task<bool> SetDebt(ReadRentDto rent)
+    {
+        if (_user.IsInRole("Landlord"))
+        {
+            if (await RentService.SetDebt(rent.Id))
+            {
+                rent.IsDebt = !rent.IsDebt;
+                return true;
+            }
+            else
+            {
+                Snackbar.Add("Ошибка", Severity.Error);
+
+            }
+            return false;
+        }
+
+        return rent.IsDebt;
+
+    }
+
+    private async Task<bool> Filter()
+    {
+        if (_user.IsInRole("Landlord"))
+        {
+            _rents = await RentService.GetByLandlord();
+        }
+        else if (_user.IsInRole("Client"))
+        {
+            _rents = await RentService.GetByClient();
+        }
+        if (_currentRealEstate != null)
+        {
+            _rents = _rents.Where(r => r.RealEstateAddress == _currentRealEstate).ToList();
+
+        }
+            
+        _isActual = !_isActual;
+        if (_isActual)
+        {
+            _rents = _rents.Where(r => r.StartRentDate <= DateTime.Now & r.EndRentDate >= DateTime.Now).ToList();
+
+        }
+
+        return _isActual;
+    }
+
+}
