@@ -49,7 +49,7 @@ namespace WheelOfFortune.Server.Controllers
             }
             try
             {
-
+                
                 await _context.Rents.AddAsync(newRent);
                 await _context.SaveChangesAsync();
                 return Ok(newRent.Id);
@@ -103,7 +103,7 @@ namespace WheelOfFortune.Server.Controllers
             return Ok(_mapper.Map<List<ReadRentDto>>(rents));
         }
 
-        [HttpGet("{rendId:int}")]
+        [HttpGet("{rentId:int}")]
         [Authorize(Roles = "Landlord")]
         public async Task<IActionResult> SetDebt(int rentId)
         {
@@ -117,7 +117,7 @@ namespace WheelOfFortune.Server.Controllers
             {
                 return Forbid();
             }
-            rent.IsDebt = true;
+            rent.IsDebt = !rent.IsDebt;
             await _context.SaveChangesAsync();
             return Ok();
         }

@@ -23,6 +23,13 @@ else
     <EditForm Model="@_realEstate" OnValidSubmit=@(_isCreate ? Create : Update)>
         <DataAnnotationsValidator />
         <MudText Typo=Typo.h3>Недвижимость @_realEstate.Name</MudText>
+        <MudStack Row=true>
+            @if (!_isReadOnly & !_isCreate)
+            {
+                <MudButton OnClick=@(() => ShowHistoryRent(_realEstate))>История аренды</MudButton>
+                <MudButton OnClick=@(() => ShowCreateRent(_realEstate))>Добавить аренду</MudButton>
+            }
+        </MudStack>
         <MudTextField @bind-Value=_realEstate.Name Label="Наименование" ReadOnly="@_isReadOnly" For=@(() => _realEstate.Name) />
         <MudTextField @bind-Value=_realEstate.Address Label="Адрес" ReadOnly="@_isReadOnly" For=@(() => _realEstate.Address) />
         <MudTextField @bind-Value=_realEstate.Security Label="Безопасность" ReadOnly="@_isReadOnly" For=@(() => _realEstate.Security) />
@@ -67,7 +74,7 @@ else
             <EditForm Model=@_realEstate OnValidSubmit=UpdateConfirmed Context="EF">
                 <DataAnnotationsValidator />
 
-                <MudCheckBox Label="Подверждено" @bind-Checked=_realEstate.IsConfirmed ReadOnly="@(!_isAdmin)" For=@(() => _realEstate.IsConfirmed) />
+                <MudCheckBox Label="Подтверждено" @bind-Checked=_realEstate.IsConfirmed ReadOnly="@(!_isAdmin)" For=@(() => _realEstate.IsConfirmed) />
                 @if (!_realEstate.IsConfirmed)
                 {
                     <MudTextField ReadOnly=@(!_isAdmin) Lines="4" @bind-Value=_realEstate.RejectionReason Label="Причина отказа" For=@(() => _realEstate.RejectionReason) />
@@ -83,8 +90,7 @@ else
 }
 
 
-@code {
-    [Parameter]
+@code { [Parameter]
     public int Id { get; set; }
     ReadRealEstateDto _realEstate;
     bool _isReadOnly = true;
@@ -106,7 +112,7 @@ else
             if (_realEstate is not null)
             {
                 var claimId = user.Claims.FirstOrDefault(c => c.Type == "Sub");
-                
+
                 if (claimId is not null)
                 {
                     _userId = int.Parse(claimId.Value);
@@ -192,6 +198,20 @@ else
     {
         var parameters = new DialogParameters() { ["UserId"] = _userId, ["RealEstateDto"] = readRealEstateDto };
         var dialog = DialogService.Show<RecordCreateDialog>("Записаться на встречу", parameters);
+
+    }
+
+    private async Task ShowCreateRent(ReadRealEstateDto readRealEstateDto)
+    {
+        var parameters = new DialogParameters() { ["RealEstateDto"] = readRealEstateDto };
+        var dialog = DialogService.Show<RentCreateDialog>("Добавить аренду", parameters);
+
+    }
+    private async Task ShowHistoryRent(ReadRealEstateDto readRealEstateDto)
+    {
+        var parameters = new DialogParameters() { ["RealEstateDto"] = readRealEstateDto };
+        var options = new DialogOptions() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = DialogService.Show<RentHistoryDialog>("История аренды", parameters, options);
 
     }
 }

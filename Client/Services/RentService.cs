@@ -4,7 +4,12 @@ using WheelOfFortune.Shared.Model.Rent;
 namespace WheelOfFortune.Client.Services
 {
     public interface IRentService
-    { }
+    {
+        Task<bool> Add(CreateRentDto createRentDto);
+        Task<List<ReadRentDto>> GetByLandlord();
+        Task<List<ReadRentDto>> GetByRealEstate(int realEstateId);
+        Task<bool> SetDebt(int rentId);
+    }
     public class RentService : IRentService
     {
         private readonly HttpClient _httpClient;
@@ -22,10 +27,7 @@ namespace WheelOfFortune.Client.Services
         {
             return await _httpClient.GetFromJsonAsync<List<ReadRentDto>>($"api/Rent/GetByRealEstate/{realEstateId}");
         }
-        public async Task<List<ReadRentDto>> GetByClient()
-        {
-            return await _httpClient.GetFromJsonAsync<List<ReadRentDto>>($"api/Rent/GetByClient/");
-        }
+
         public async Task<List<ReadRentDto>> GetByLandlord()
         {
             return await _httpClient.GetFromJsonAsync<List<ReadRentDto>>($"api/Rent/GetByLandlord/");

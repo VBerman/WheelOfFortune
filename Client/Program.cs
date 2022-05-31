@@ -22,5 +22,6 @@ builder.Services.AddScoped<RealEstateService>();
 builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRecordService, RecordService>();
+builder.Services.AddScoped<IRentService, RentService>();
 builder.Services.AddAutoMapper(Assembly.GetAssembly(typeof(RealEstateMappingProfile)));
 await builder.Build().RunAsync();
