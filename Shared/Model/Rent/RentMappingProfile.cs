@@ -11,6 +11,7 @@ namespace WheelOfFortune.Shared.Model.Rent
         public RealEstateMappingProfile()
         {
             CreateMap<CreateRentDto, RentEntity>();
+            CreateMap<RentEntity, ReadRentDto>();
            
         }
     }

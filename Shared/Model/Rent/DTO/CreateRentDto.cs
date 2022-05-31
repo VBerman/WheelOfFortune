@@ -9,7 +9,8 @@ namespace WheelOfFortune.Shared.Model.Rent
 {
     public class CreateRentDto
     {
-        public int ClientId { get; set; }
+        [EmailAddress]
+        public string ClientEmail { get; set; }
         public int RealEstateId { get; set; }
 
         public DateTime StartRentDate { get; set; }
