@@ -109,7 +109,7 @@ namespace WheelOfFortune.Server.Controllers
             {
                 return NotFound();
             }
-            if (User.IsInRole("Landlord") & int.Parse(User.Claims.FirstOrDefault(c => c.Type == "Sub")?.Value) == realEstate.LandlordId)
+            if (User.IsInRole("Landlord") & int.Parse(User.Claims.FirstOrDefault(c => c.Type == "Sub")?.Value) != realEstate.LandlordId)
             {
                 return Forbid();
             }
