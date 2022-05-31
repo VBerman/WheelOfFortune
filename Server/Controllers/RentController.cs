@@ -49,7 +49,7 @@ namespace WheelOfFortune.Server.Controllers
             }
             try
             {
-                
+                newRent.PriceInMonth = realEstate.Price;
                 await _context.Rents.AddAsync(newRent);
                 await _context.SaveChangesAsync();
                 return Ok(newRent.Id);

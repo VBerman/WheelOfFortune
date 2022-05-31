@@ -6,6 +6,7 @@ namespace WheelOfFortune.Client.Services
     public interface IRentService
     {
         Task<bool> Add(CreateRentDto createRentDto);
+        Task<List<ReadRentDto>> GetByClient();
         Task<List<ReadRentDto>> GetByLandlord();
         Task<List<ReadRentDto>> GetByRealEstate(int realEstateId);
         Task<bool> SetDebt(int rentId);
@@ -31,6 +32,10 @@ namespace WheelOfFortune.Client.Services
         public async Task<List<ReadRentDto>> GetByLandlord()
         {
             return await _httpClient.GetFromJsonAsync<List<ReadRentDto>>($"api/Rent/GetByLandlord/");
+        }
+        public async Task<List<ReadRentDto>> GetByClient()
+        {
+            return await _httpClient.GetFromJsonAsync<List<ReadRentDto>>($"api/Rent/GetByClient/");
         }
 
         public async Task<bool> SetDebt(int rentId)

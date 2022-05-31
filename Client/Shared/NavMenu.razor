@@ -11,8 +11,9 @@
     <AuthorizeView Roles="Landlord,Client">
         <MudNavLink Href="@($"Record/{context.User.Claims.FirstOrDefault(c => c.Type == "Sub")?.Value}")" ForceLoad=false Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Timer">Мои встречи</MudNavLink>
         <MudNavLink Href="@($"Chat")" ForceLoad=false Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Chat">Чат</MudNavLink>
+        <MudNavLink Href="@($"Rent")" ForceLoad=false Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.HomeWork">Аренда</MudNavLink>
         
     </AuthorizeView>
-    <MudNavLink Href="/AboutUs" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Info">О нас</MudNavLink>
+    <MudNavLink Href="AboutUs" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Info">О нас</MudNavLink>
 
 </MudNavMenu>
