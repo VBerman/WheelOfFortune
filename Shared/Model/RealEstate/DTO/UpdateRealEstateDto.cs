@@ -10,17 +10,22 @@ namespace WheelOfFortune.Shared.Model.RealEstate
     public class UpdateRealEstateDto
     {
         public int Id { get; set; }
-        [MaxLength(150)]
+        [Required(ErrorMessage = "Наименование обязательно для заполнения")]
+        [MaxLength(150, ErrorMessage = "Максимальная длина - 150 символов")]
         public string Name { get; set; }
-        [MaxLength(350)]
+        [Required(ErrorMessage = "Адрес обязателен для заполнения")]
+        [MaxLength(350, ErrorMessage = "Максимальная длина - 350 символов")]
         public string Address { get; set; }
-        [MaxLength(150)]
+        [MaxLength(150, ErrorMessage = "Максимальная длина - 150 символов")]
+        [Required(ErrorMessage = "Безопасность обязательна для заполнения")]
         public string Security { get; set; }
+        [Required(ErrorMessage = "Необходимо указать наличие парковки")]
         public bool HasParking { get; set; }
-        [Range(0, 10000.00)]
+        [Required(ErrorMessage = "Площадь обязательна для заполнения")]
+        [Range(5, 10000.00, ErrorMessage = "Минимальное значение - 5, максимальное - 10000")]
         public decimal Area { get; set; }
-        [DataType(DataType.Currency)]
-        [Range(0, 100000000)]
+        [Required(ErrorMessage = "Цена обязательна для заполнения")]
+        [Range(5, 100000000.00, ErrorMessage = "Минимальное значение - 5, максимальное - 100000000")]
         public decimal Price { get; set; }
         public string? AdditionalInfo { get; set; }
         public string? ImagePath { get; set; }

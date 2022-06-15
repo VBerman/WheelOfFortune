@@ -10,11 +10,11 @@ namespace WheelOfFortune.Shared.Model.User
     public class AuthenticateUserDto
     {
         [DataType(DataType.EmailAddress)]
-        [Required]
+        [Required(ErrorMessage = "Email обязателен")]
         public string Email { get; set; }
         [DataType(DataType.Password)]
-        [Required]
-        [MinLength(3)]
+        [Required(ErrorMessage = "Пароль обязателен")]
+        [MinLength(3, ErrorMessage = "Минимальная длина пароля - 3 символа")]
         public string Password { get; set; }    
     }
 }
